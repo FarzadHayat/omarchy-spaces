@@ -155,6 +155,12 @@ Item {
             ]
           }
 
+          ToggleSetting {
+            label: "Pill background"
+            description: "Fill behind occupied and hovered workspaces"
+            key: "pillBackground"
+          }
+
           ChoiceSetting {
             title: "WORKSPACE LABEL"
             key: "labelStyle"

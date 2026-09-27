@@ -59,6 +59,12 @@
         "default": "subtle"
       },
       {
+        "key": "pillBackground",
+        "type": "bool",
+        "label": "Pill background",
+        "default": true
+      },
+      {
         "key": "labelStyle",
         "type": "enum",
         "label": "Workspace label",
