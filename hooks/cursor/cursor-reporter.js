@@ -42,8 +42,10 @@
 // State decisions live in cursor-state.js, which is pure and unit tested.
 
 import { spawnSync } from "node:child_process"
-import { readFileSync } from "node:fs"
-import { sessionKey, stateForEvent } from "./cursor-state.js"
+import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+import { hasPendingTurn, sessionKey, stateForEvent, trackedId } from "./cursor-state.js"
 
 const PLUGIN_ID = "tornikegomareli.spaces"
 
@@ -85,6 +87,59 @@ function send(session, state, pids) {
   } catch {}
 }
 
+// Per-session turn ledger, so a stop only reports done when no submitted
+// turn is still unstopped (queued prompts start silently). One empty file
+// per turn id under submitted/ or stopped/: creating a file is atomic, so
+// concurrent hook runs cannot lose an update the way read-modify-write of a
+// single JSON file could. Returns true when a turn is still pending.
+function sessionDir(session) {
+  const safe = String(session || "unknown").replace(/[^a-zA-Z0-9_-]/g, "_")
+  return join(tmpdir(), "cursor-spaces", safe)
+}
+
+function listIds(dir) {
+  try {
+    return readdirSync(dir)
+  } catch {
+    return []
+  }
+}
+
+function trackTurn(session, turn, id) {
+  if (!id) return false
+  try {
+    const dir = join(sessionDir(session), turn)
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, id.replace(/[^a-zA-Z0-9_-]/g, "_")), "")
+    sweepSessions()
+    const base = sessionDir(session)
+    return hasPendingTurn(listIds(join(base, "submitted")), listIds(join(base, "stopped")))
+  } catch {
+    return false
+  }
+}
+
+function forgetSession(session) {
+  try {
+    rmSync(sessionDir(session), { recursive: true, force: true })
+  } catch {}
+}
+
+// Sessions whose agent died mid-queue never send sessionEnd; drop ledgers
+// older than a day so they do not accumulate in tmp.
+function sweepSessions() {
+  try {
+    const root = join(tmpdir(), "cursor-spaces")
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000
+    for (const entry of listIds(root)) {
+      const dir = join(root, entry)
+      try {
+        if (statSync(dir).mtimeMs < cutoff) rmSync(dir, { recursive: true, force: true })
+      } catch {}
+    }
+  } catch {}
+}
+
 function main() {
   let raw = ""
   try {
@@ -100,7 +155,21 @@ function main() {
   const event = payload.hook_event_name || payload.hook_event || payload.event || ""
   const state = stateForEvent(event)
   if (!state) return
-  send(sessionKey(payload), state, pidChain())
+  const session = sessionKey(payload)
+  if (event === "sessionEnd") {
+    forgetSession(session)
+    send(session, state, pidChain())
+    return
+  }
+  if (event === "beforeSubmitPrompt" || event === "stop") {
+    const turn = state === "done" ? "stopped" : "submitted"
+    if (trackTurn(session, turn, trackedId(payload)) && state === "done") {
+      // A queued follow-up is still unstopped: its start emits nothing, so
+      // reporting done now would stick until late in that turn. Hold.
+      return
+    }
+  }
+  send(session, state, pidChain())
 }
 
 main()
