@@ -1,10 +1,11 @@
 {
   "name": "@farzadhayat/opencode-spaces",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Agent-status reporter for opencode, feeding the Omarchy Spaces bar widget",
   "type": "module",
   "main": "opencode-plugin.js",
   "files": [
+    "README.md",
     "opencode-plugin.js",
     "opencode-state.js"
   ],
