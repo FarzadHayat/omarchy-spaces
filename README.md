@@ -77,7 +77,7 @@ If you added the agent hooks or the settings key below, delete those lines from 
 - Scroll over the widget to move between workspaces.
 - Hover an icon to see the window title.
 - Hover another workspace to preview it. Click a window in the preview to focus it.
-- Right-click the widget, or click the gear in the fixed slot before the workspaces (shown on hover by default), to open settings.
+- Right-click the widget to open settings. An optional gear can be enabled under Appearance → Settings button; it stays in a fixed slot before the workspaces.
 
 ## Settings
 
@@ -116,6 +116,8 @@ ln -sfn "$PWD" ~/.config/omarchy/plugins/tornikegomareli.spaces
 omarchy plugin enable tornikegomareli.spaces
 node tests/model.test.js
 bash tests/settings.sh
+# Optional: opens a temporary Wayland window to test the settings gear
+bash tests/gear.sh
 ```
 
 After code changes, run `omarchy restart shell`.

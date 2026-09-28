@@ -181,7 +181,7 @@ Item {
             options: [
               { value: "hover", label: "On hover" },
               { value: "always", label: "Always" },
-              { value: "never", label: "Hidden" }
+              { value: "never", label: "Right-click only" }
             ]
           }
 
