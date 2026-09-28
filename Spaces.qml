@@ -193,7 +193,7 @@ Panel {
       '[[ -r /proc/$pid/stat ]] || continue;',
       'stat=$(cat "/proc/$pid/stat" 2>/dev/null) || continue;',
       'rest=${stat##*) };',
-      '[[ ${rest:1:1} != "Z" ]] && echo "$pid";',
+      '[[ ${rest:0:1} != "Z" ]] && echo "$pid";',
       'done'
     ].join("\n")]
     agentProbe.running = true
