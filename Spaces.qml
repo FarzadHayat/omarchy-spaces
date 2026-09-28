@@ -572,6 +572,55 @@ Panel {
     columns: root.vertical ? 1 : Math.max(1, root.workspaceIds.length + 1)
     spacing: Style.space(root.metrics.gap)
 
+    // Reserve the leading slot so workspace expansion cannot move the target.
+    // Hover mode only fades the artwork; its hit area stays the same size.
+    Item {
+      id: gear
+      objectName: "spacesSettingsGear"
+      readonly property bool shown: root.opened || root.cfg.settingsButton === "always"
+        || (root.cfg.settingsButton === "hover" && root.widgetHovered)
+      readonly property real size: Math.max(root.pillThickness, Style.space(28))
+      visible: root.cfg.settingsButton !== "never"
+      implicitWidth: root.vertical ? root.pillThickness : size
+      implicitHeight: root.vertical ? size : root.pillThickness
+      width: implicitWidth
+      height: implicitHeight
+      opacity: shown ? 1 : 0
+      Behavior on opacity { enabled: root.dur > 0; NumberAnimation { duration: root.dur } }
+
+      Rectangle {
+        anchors.fill: parent
+        radius: root.pillRadius
+        color: root.opened ? root.activeFill() : gearMouse.containsMouse ? Util.alpha(root.fg, 0.12) : "transparent"
+        Behavior on color { enabled: root.fastDur > 0; ColorAnimation { duration: root.fastDur } }
+      }
+
+      Text {
+        anchors.centerIn: parent
+        text: "\uf013"
+        color: root.opened ? root.activeText() : root.fg
+        opacity: root.opened || gearMouse.containsMouse ? 1 : 0.6
+        rotation: root.opened ? 90 : 0
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.body
+        Behavior on rotation { enabled: root.dur > 0; NumberAnimation { duration: root.dur; easing.type: Easing.OutCubic } }
+      }
+
+      MouseArea {
+        id: gearMouse
+        anchors.fill: parent
+        // Use the full bar thickness for the pointer target.
+        anchors.leftMargin: root.vertical ? -(root.barSize - root.pillThickness) / 2 : 0
+        anchors.rightMargin: anchors.leftMargin
+        anchors.topMargin: root.vertical ? 0 : -(root.barSize - root.pillThickness) / 2
+        anchors.bottomMargin: anchors.topMargin
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.toggle()
+        onContainsMouseChanged: containsMouse ? root.showTip(gear, "Spaces settings") : root.hideTip(gear)
+      }
+    }
+
     Repeater {
       id: pillRepeater
       model: ScriptModel { values: root.workspaceIds }
@@ -950,52 +999,7 @@ Panel {
       }
     }
 
-    // Settings gear. Slides in while the pointer is over the widget (or
-    // always / never, per settings); also lit while the panel is open.
-    Item {
-      id: gear
-      readonly property bool shown: root.opened || root.cfg.settingsButton === "always"
-        || (root.cfg.settingsButton === "hover" && root.widgetHovered)
-      readonly property real size: root.pillThickness
-      property real extent: shown ? size : 0
-      Behavior on extent { enabled: root.dur > 0; NumberAnimation { duration: root.dur; easing.type: Easing.OutCubic } }
 
-      visible: extent > 0.5
-      implicitWidth: root.vertical ? size : extent
-      implicitHeight: root.vertical ? extent : size
-      width: implicitWidth
-      height: implicitHeight
-      clip: true
-      opacity: shown ? 1 : 0
-      Behavior on opacity { enabled: root.dur > 0; NumberAnimation { duration: root.dur } }
-
-      Rectangle {
-        anchors.fill: parent
-        radius: root.pillRadius
-        color: root.opened ? root.activeFill() : gearMouse.containsMouse ? Util.alpha(root.fg, 0.12) : "transparent"
-        Behavior on color { enabled: root.fastDur > 0; ColorAnimation { duration: root.fastDur } }
-      }
-
-      Text {
-        anchors.centerIn: parent
-        text: "\uf013"
-        color: root.opened ? root.activeText() : root.fg
-        opacity: root.opened || gearMouse.containsMouse ? 1 : 0.6
-        rotation: root.opened ? 90 : 0
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.body
-        Behavior on rotation { enabled: root.dur > 0; NumberAnimation { duration: root.dur; easing.type: Easing.OutCubic } }
-      }
-
-      MouseArea {
-        id: gearMouse
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.toggle()
-        onContainsMouseChanged: containsMouse ? root.showTip(gear, "Spaces settings") : root.hideTip(gear)
-      }
-    }
   }
 
   // ------------------------------------------------------------ preview card

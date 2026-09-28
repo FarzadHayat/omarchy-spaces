@@ -77,7 +77,7 @@ If you added the agent hooks or the settings key below, delete those lines from 
 - Scroll over the widget to move between workspaces.
 - Hover an icon to see the window title.
 - Hover another workspace to preview it. Click a window in the preview to focus it.
-- Right-click the widget, or click the gear that shows on hover, to open settings.
+- Right-click the widget, or click the gear in the fixed slot before the workspaces (shown on hover by default), to open settings.
 
 ## Settings
 
