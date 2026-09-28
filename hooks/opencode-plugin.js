@@ -35,7 +35,7 @@
 //
 // State decisions live in opencode-state.js, which is pure and unit tested.
 
-import { spawn } from "node:child_process"
+import { spawn, spawnSync } from "node:child_process"
 import { readFileSync } from "node:fs"
 import { WAIT_DELAY, needsWaitTimer, reduce } from "./opencode-state.js"
 
@@ -81,10 +81,72 @@ function send(session, state, pids) {
   } catch {}
 }
 
+// Synchronous twin for the exit handler: async work never flushes after
+// "exit", so the last "end" report must block.
+function sendSync(session, state, pids) {
+  if (!session || !state) return
+  try {
+    spawnSync("omarchy-shell", [PLUGIN_ID, "agent", String(session), state, pids.join(",")], {
+      stdio: "ignore",
+    })
+  } catch {}
+}
+
 export const SpacesAgent = async () => {
   const pids = pidChain()
   const sessions = new Map()
   const timers = new Map()
+  // Seen permission request ids per session, and id-less hook reports still
+  // waiting for their event twin. opencode reports each permission twice:
+  // the `permission.ask` hook fires first, then the `permission.asked` event
+  // for the same request. Counting both would need two replies for one
+  // prompt and wedge the badge on "waiting".
+  const permIds = new Map()
+  const permBare = new Map()
+
+  function forgetPermission(session) {
+    permIds.delete(session)
+    permBare.delete(session)
+  }
+
+  function notePermission(session, id) {
+    if (id == null) {
+      permBare.set(session, (permBare.get(session) || 0) + 1)
+      apply(session, "permission")
+      return
+    }
+    let ids = permIds.get(session)
+    if (!ids) {
+      ids = new Set()
+      permIds.set(session, ids)
+    }
+    if (ids.has(id)) return
+    ids.add(id)
+    const bare = permBare.get(session) || 0
+    if (bare > 0) {
+      // The id-less hook report just before this event was the same request:
+      // adopt its pending count instead of counting a second prompt.
+      if (bare === 1) permBare.delete(session)
+      else permBare.set(session, bare - 1)
+      return
+    }
+    apply(session, "permission")
+  }
+
+  function noteReplied(session, id) {
+    if (id != null) {
+      const ids = permIds.get(session)
+      if (ids) {
+        ids.delete(id)
+        if (!ids.size) permIds.delete(session)
+      }
+    } else {
+      const bare = (permBare.get(session) || 0) - 1
+      if (bare <= 0) permBare.delete(session)
+      else permBare.set(session, bare)
+    }
+    apply(session, "replied")
+  }
 
   function cancel(session) {
     const timer = timers.get(session)
@@ -116,19 +178,16 @@ export const SpacesAgent = async () => {
     if (next.emit) send(session, next.emit, pids)
   }
 
-  // opencode reports permission requests twice over: the `permission.ask` hook
-  // and a `permission.updated` / `permission.asked` event. Either is enough,
-  // and `replied` is what clears the pending count, so a duplicate is safe.
   function normalize(type, properties = {}) {
     const session = properties.sessionID
     if (!session) return
     switch (type) {
       case "permission.updated":
       case "permission.asked":
-        apply(session, "permission")
+        notePermission(session, properties.id)
         break
       case "permission.replied":
-        apply(session, "replied")
+        noteReplied(session, properties.requestID)
         break
       case "session.status":
         if (properties.status && properties.status.type !== "idle") apply(session, "busy")
@@ -138,6 +197,7 @@ export const SpacesAgent = async () => {
         break
       case "session.deleted":
         cancel(session)
+        forgetPermission(session)
         sessions.delete(session)
         send(session, "end", pids)
         break
@@ -146,10 +206,11 @@ export const SpacesAgent = async () => {
 
   // dispose covers a normal quit. This is the net for a hard exit, where the
   // bar would otherwise keep a stale "working" badge on a dead window.
+  // Synchronous: async spawns never flush inside an exit handler.
   process.once("exit", () => {
     for (const [session] of sessions) {
       cancel(session)
-      send(session, "end", pids)
+      sendSync(session, "end", pids)
     }
   })
 
@@ -171,12 +232,15 @@ export const SpacesAgent = async () => {
 
     "permission.ask": async (input, output) => {
       if (output && output.status !== "ask") return
-      apply(input && input.sessionID, "permission")
+      // input.id is optional in older opencode; without it the request still
+      // counts, and its event twin adopts the count when it arrives with one.
+      notePermission(input && input.sessionID, input && input.id)
     },
 
     dispose: async () => {
       for (const [session] of sessions) {
         cancel(session)
+        forgetPermission(session)
         send(session, "end", pids)
       }
       sessions.clear()

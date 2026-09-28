@@ -96,6 +96,12 @@ function main() {
       assert.deepStrictEqual(run(["permission", "timer", "replied"]).emitted, ["waiting", "working"])
     })
 
+    test("a reply with nothing pending reports nothing", () => {
+      const { emitted, state } = run(["replied"])
+      assert.deepStrictEqual(emitted, [])
+      assert.strictEqual(state.pending, 0)
+    })
+
     test("a stray timer does nothing", () => {
       assert.deepStrictEqual(run(["timer"]).emitted, [])
     })

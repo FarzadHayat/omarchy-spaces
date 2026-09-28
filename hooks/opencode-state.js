@@ -59,7 +59,9 @@ export function reduce(prev, signal) {
       break
 
     case "replied":
-      if (pending > 0) pending--
+      // An unmatched reply answers nothing: hold instead of inventing work.
+      if (pending === 0) return hold(base)
+      pending--
       want = pending > 0 ? "waiting" : "working"
       break
 
