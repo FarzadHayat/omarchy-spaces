@@ -40,6 +40,22 @@ To turn it on, add these hooks to `~/.claude/settings.json`:
 
 Other agents can report the same way: `omarchy-shell tornikegomareli.spaces agent <session> <working|waiting|done|end> <pids>`, where `<pids>` lists the agent's process and its parents, comma-separated.
 
+### OpenCode
+
+`hooks/opencode-plugin.js` is an OpenCode plugin that reports for you, so a terminal running OpenCode gets the same badge a Claude Code terminal gets. It reports through the `omarchy-shell` command above, so nothing else is needed.
+
+OpenCode loads every plugin in its plugin directory, so link it in once:
+
+```sh
+mkdir -p ~/.config/opencode/plugins
+ln -sfn ~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/opencode-plugin.js \
+        ~/.config/opencode/plugins/spaces.js
+```
+
+The link points into the installed plugin, so `omarchy plugin update tornikegomareli.spaces` updates the reporter too. Restart OpenCode, run a prompt, and the terminal icon spins in the bar while it works and gets a check mark when it stops.
+
+`working` and `done` are reported as OpenCode works. `waiting` needs a permission prompt, so with `--auto` it rarely appears: OpenCode answers its own permission requests in milliseconds, and the plugin waits 1.5s before showing a `!` so a prompt answered instantly never flashes. To see it, run `opencode` without `--auto` and ask it to do something that needs approval.
+
 ## Install
 
 ```sh
@@ -51,7 +67,7 @@ Requirements:
 
 - Omarchy 4 with the Quickshell bar (Hyprland 0.56 or newer)
 - `jq` for the agent hook (installed with Omarchy)
-- Claude Code, only for agent status
+- Claude Code or OpenCode, only for agent status
 
 Works with the bar on any edge of the screen. Tested on a single monitor.
 
@@ -69,7 +85,11 @@ omarchy plugin remove tornikegomareli.spaces
 omarchy plugin enable omarchy.workspaces   # bring back the built-in switcher
 ```
 
-If you added the agent hooks or the settings key below, delete those lines from `~/.claude/settings.json` and `~/.config/hypr/bindings.lua`.
+If you added the agent hooks or the settings key below, delete those lines from `~/.claude/settings.json` and `~/.config/hypr/bindings.lua`. If you linked the OpenCode plugin, remove the link:
+
+```sh
+rm ~/.config/opencode/plugins/spaces.js
+```
 
 ## Using it
 
@@ -113,6 +133,7 @@ From a clone of this repository, link it into Omarchy and run the tests:
 ln -sfn "$PWD" ~/.config/omarchy/plugins/tornikegomareli.spaces
 omarchy plugin enable tornikegomareli.spaces
 node tests/model.test.js
+node tests/opencode-plugin.test.js
 ```
 
 After code changes, run `omarchy restart shell`.
