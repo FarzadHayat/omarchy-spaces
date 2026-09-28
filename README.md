@@ -40,6 +40,10 @@ To turn it on, add these hooks to `~/.claude/settings.json`:
 
 Other agents can report the same way: `omarchy-shell tornikegomareli.spaces agent <session> <working|waiting|done|end> <pids>`, where `<pids>` lists the agent's process and its parents, comma-separated.
 
+### Cursor
+
+`hooks/cursor/cursor-reporter.js` reports Cursor agent activity through the same command, so a Cursor window (or a terminal running `cursor-agent`) gets the same badge: spinner while it works, check mark when the turn finishes. Install from npm (`npm install -g @farzadhayat/cursor-spaces`) and register `cursor-spaces-hook` in `~/.cursor/hooks.json`; see `hooks/cursor/README.md`. There is no `waiting` badge for Cursor: it exposes no hook for "the agent asked the user a question".
+
 ## Install
 
 ```sh
