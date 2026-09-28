@@ -1,0 +1,24 @@
+{
+  "name": "@farzadhayat/opencode-spaces",
+  "version": "1.0.1",
+  "description": "Agent-status reporter for opencode, feeding the Omarchy Spaces bar widget",
+  "type": "module",
+  "main": "opencode-plugin.js",
+  "files": [
+    "README.md",
+    "opencode-plugin.js",
+    "opencode-state.js"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tornikegomareli/omarchy-spaces.git",
+    "directory": "hooks"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "omarchy",
+    "hyprland"
+  ]
+}

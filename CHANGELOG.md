@@ -7,6 +7,11 @@
 - Agent status: the widget rechecks live `working` and `waiting` claims against
   Linux process state every minute, so a crashed agent no longer leaves a
   permanent badge. Finished claims are preserved until acknowledged
+- Agent status: terminals running OpenCode get the same badge as Claude Code
+  terminals. `hooks/opencode-plugin.js` reports through the existing
+  `omarchy-shell ... agent` entry point, so the widget is unchanged. A
+  permission prompt holds off for 1.5s before showing `!`, so OpenCode
+  `--auto` answering its own requests never flashes
 
 ## 1.0.0
 
