@@ -48,7 +48,7 @@ Install it from npm:
 
 ```json
 {
-  "plugin": ["opencode-spaces"]
+  "plugin": ["@farzadhayat/opencode-spaces"]
 }
 ```
 

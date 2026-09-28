@@ -20,7 +20,7 @@
 //
 //   {
 //     "$schema": "https://opencode.ai/config.json",
-//     "plugin": ["opencode-spaces"]
+//   "plugin": ["@farzadhayat/opencode-spaces"]
 //   }
 //
 // or, to run this exact checkout (repo stays the single source of truth,

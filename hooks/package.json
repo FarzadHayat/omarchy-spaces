@@ -1,5 +1,5 @@
 {
-  "name": "opencode-spaces",
+  "name": "@farzadhayat/opencode-spaces",
   "version": "1.0.0",
   "description": "Agent-status reporter for opencode, feeding the Omarchy Spaces bar widget",
   "type": "module",
