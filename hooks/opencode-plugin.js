@@ -16,7 +16,15 @@
 // The pid list is this process and its ancestors; the widget matches them
 // against terminal windows to find which one to badge.
 //
-// Install (repo stays the single source of truth, no copy to keep in sync):
+// Install either from npm:
+//
+//   {
+//     "$schema": "https://opencode.ai/config.json",
+//     "plugin": ["opencode-spaces"]
+//   }
+//
+// or, to run this exact checkout (repo stays the single source of truth,
+// no copy to keep in sync):
 //
 //   {
 //     "$schema": "https://opencode.ai/config.json",
