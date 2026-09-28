@@ -46,15 +46,7 @@ Other agents can report the same way: `omarchy-shell tornikegomareli.spaces agen
 
 `hooks/opencode-plugin.js` is an OpenCode plugin that reports for you, so a terminal running OpenCode gets the same badge a Claude Code terminal gets. It reports through the `omarchy-shell` command above, so nothing else is needed.
 
-Install it from npm:
-
-```json
-{
-  "plugin": ["@farzadhayat/opencode-spaces"]
-}
-```
-
-Or link this checkout in once (tracks the installed plugin through `omarchy plugin update`):
+To turn it on, link it into OpenCode's plugins folder:
 
 ```sh
 mkdir -p ~/.config/opencode/plugins

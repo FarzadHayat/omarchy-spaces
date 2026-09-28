@@ -16,22 +16,11 @@
 // The pid list is this process and its ancestors; the widget matches them
 // against terminal windows to find which one to badge.
 //
-// Install either from npm:
+// Install by linking the installed plugin's copy into OpenCode, so
+// `omarchy plugin update` keeps the reporter current:
 //
-//   {
-//     "$schema": "https://opencode.ai/config.json",
-//   "plugin": ["@farzadhayat/opencode-spaces"]
-//   }
-//
-// or, to run this exact checkout (repo stays the single source of truth,
-// no copy to keep in sync):
-//
-//   {
-//     "$schema": "https://opencode.ai/config.json",
-//     "plugin": ["file:///path/to/omarchy-spaces/hooks/opencode-plugin.js"]
-//   }
-//
-// Then `omarchy-shell shell rescanPlugins` if the bar is running.
+//   ln -sfn ~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/opencode-plugin.js \
+//           ~/.config/opencode/plugins/spaces.js
 //
 // State decisions live in opencode-state.js, which is pure and unit tested.
 
