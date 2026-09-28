@@ -99,13 +99,15 @@ rm ~/.config/opencode/plugins/spaces.js
 - Scroll over the widget to move between workspaces.
 - Hover an icon to see the window title.
 - Hover another workspace to preview it. Click a window in the preview to focus it.
-- Right-click the widget, or click the gear that shows on hover, to open settings.
+- Right-click the widget to open settings. An optional gear can be enabled under Appearance → Settings button; it stays in a fixed slot before the workspaces.
 
 ## Settings
 
 <img src=".github/assets/settings.png" width="330" align="right" alt="Spaces settings panel" />
 
-Choose when icons show (always, active, on hover, or never), icon style and size, grouping by app, previews, agent status, the active workspace style, density, and more. Settings are saved to `~/.config/omarchy/shell.json`.
+Settings are organised into App icons, Windows, Appearance, Workspaces, Previews, and Behaviour. Each section fits its controls without an internal scroll area, and changes apply automatically and are saved to `~/.config/omarchy/shell.json`.
+
+Use Tab / Shift+Tab to move through controls and Enter / Space to activate them. On sliders, use Left / Right to adjust by one, or Home / End for the minimum or maximum. Reset to defaults asks for confirmation before resetting all sections.
 
 To open settings with a key, add this to `~/.config/hypr/bindings.lua`:
 
@@ -136,6 +138,9 @@ ln -sfn "$PWD" ~/.config/omarchy/plugins/tornikegomareli.spaces
 omarchy plugin enable tornikegomareli.spaces
 node tests/model.test.js
 node tests/opencode-plugin.test.js
+bash tests/settings.sh
+# Optional: opens a temporary Wayland window to test the settings gear
+bash tests/gear.sh
 ```
 
 After code changes, run `omarchy restart shell`.

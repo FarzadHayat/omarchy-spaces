@@ -27,7 +27,7 @@ var DEFAULTS = {
   tooltips: true,
   density: "normal",          // "compact" | "normal" | "roomy"
   activeClick: "none",        // clicking the active pill: "none" | "previous"
-  settingsButton: "hover",    // gear button: "hover" | "always" | "never"
+  settingsButton: "never",    // gear button: "hover" | "always" | "never"
   previews: true,             // live preview of a workspace on hover
   previewSize: "medium",      // "small" | "medium" | "large"
   previewLive: true,          // keep previews streaming; false = one frame

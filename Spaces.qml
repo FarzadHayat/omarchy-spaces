@@ -647,6 +647,55 @@ Panel {
     columns: root.vertical ? 1 : Math.max(1, root.workspaceIds.length + 1)
     spacing: Style.space(root.metrics.gap)
 
+    // Reserve the leading slot so workspace expansion cannot move the target.
+    // Hover mode only fades the artwork; its hit area stays the same size.
+    Item {
+      id: gear
+      objectName: "spacesSettingsGear"
+      readonly property bool shown: root.opened || root.cfg.settingsButton === "always"
+        || (root.cfg.settingsButton === "hover" && root.widgetHovered)
+      readonly property real size: Math.max(root.pillThickness, Style.space(28))
+      visible: root.cfg.settingsButton !== "never"
+      implicitWidth: root.vertical ? root.pillThickness : size
+      implicitHeight: root.vertical ? size : root.pillThickness
+      width: implicitWidth
+      height: implicitHeight
+      opacity: shown ? 1 : 0
+      Behavior on opacity { enabled: root.dur > 0; NumberAnimation { duration: root.dur } }
+
+      Rectangle {
+        anchors.fill: parent
+        radius: root.pillRadius
+        color: root.opened ? root.activeFill() : gearMouse.containsMouse ? Util.alpha(root.fg, 0.12) : "transparent"
+        Behavior on color { enabled: root.fastDur > 0; ColorAnimation { duration: root.fastDur } }
+      }
+
+      Text {
+        anchors.centerIn: parent
+        text: "\uf013"
+        color: root.opened ? root.activeText() : root.fg
+        opacity: root.opened || gearMouse.containsMouse ? 1 : 0.6
+        rotation: root.opened ? 90 : 0
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.body
+        Behavior on rotation { enabled: root.dur > 0; NumberAnimation { duration: root.dur; easing.type: Easing.OutCubic } }
+      }
+
+      MouseArea {
+        id: gearMouse
+        anchors.fill: parent
+        // Use the full bar thickness for the pointer target.
+        anchors.leftMargin: root.vertical ? -(root.barSize - root.pillThickness) / 2 : 0
+        anchors.rightMargin: anchors.leftMargin
+        anchors.topMargin: root.vertical ? 0 : -(root.barSize - root.pillThickness) / 2
+        anchors.bottomMargin: anchors.topMargin
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.toggle()
+        onContainsMouseChanged: containsMouse ? root.showTip(gear, "Spaces settings") : root.hideTip(gear)
+      }
+    }
+
     Repeater {
       id: pillRepeater
       model: ScriptModel { values: root.workspaceIds }
@@ -1026,52 +1075,7 @@ Panel {
       }
     }
 
-    // Settings gear. Slides in while the pointer is over the widget (or
-    // always / never, per settings); also lit while the panel is open.
-    Item {
-      id: gear
-      readonly property bool shown: root.opened || root.cfg.settingsButton === "always"
-        || (root.cfg.settingsButton === "hover" && root.widgetHovered)
-      readonly property real size: root.pillThickness
-      property real extent: shown ? size : 0
-      Behavior on extent { enabled: root.dur > 0; NumberAnimation { duration: root.dur; easing.type: Easing.OutCubic } }
 
-      visible: extent > 0.5
-      implicitWidth: root.vertical ? size : extent
-      implicitHeight: root.vertical ? extent : size
-      width: implicitWidth
-      height: implicitHeight
-      clip: true
-      opacity: shown ? 1 : 0
-      Behavior on opacity { enabled: root.dur > 0; NumberAnimation { duration: root.dur } }
-
-      Rectangle {
-        anchors.fill: parent
-        radius: root.pillRadius
-        color: root.opened ? root.activeFill() : gearMouse.containsMouse ? Util.alpha(root.fg, 0.12) : "transparent"
-        Behavior on color { enabled: root.fastDur > 0; ColorAnimation { duration: root.fastDur } }
-      }
-
-      Text {
-        anchors.centerIn: parent
-        text: "\uf013"
-        color: root.opened ? root.activeText() : root.fg
-        opacity: root.opened || gearMouse.containsMouse ? 1 : 0.6
-        rotation: root.opened ? 90 : 0
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.body
-        Behavior on rotation { enabled: root.dur > 0; NumberAnimation { duration: root.dur; easing.type: Easing.OutCubic } }
-      }
-
-      MouseArea {
-        id: gearMouse
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.toggle()
-        onContainsMouseChanged: containsMouse ? root.showTip(gear, "Spaces settings") : root.hideTip(gear)
-      }
-    }
   }
 
   // ------------------------------------------------------------ preview card
@@ -1345,321 +1349,24 @@ Panel {
     owner: root
     bar: root.bar
     open: root.opened
-    focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(400))
-    contentHeight: panel.fittedContentHeight(form.implicitHeight)
+    focusTarget: settingsForm
+    contentWidth: panel.fittedContentWidth(Style.space(680))
+    contentHeight: panel.fittedContentHeight(Math.max(Style.space(520), settingsForm.implicitHeight))
 
-    PanelKeyCatcher {
-      id: keyCatcher
+    SpacesSettings {
+      id: settingsForm
       anchors.fill: parent
-      onCloseRequested: root.close()
-      onTabRequested: function(direction) { root.switchPanel(direction) }
-
-      Flickable {
-        anchors.fill: parent
-        contentWidth: width
-        contentHeight: form.implicitHeight
-        boundsBehavior: Flickable.StopAtBounds
-        clip: true
-
-        Column {
-          id: form
-          width: parent.width
-          spacing: Style.space(14)
-
-          Column {
-            width: parent.width
-            spacing: Style.space(2)
-            Text {
-              text: "Spaces"
-              color: root.fg
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.title
-              font.bold: true
-            }
-            Text {
-              text: "SEE WHAT RUNS ON EVERY WORKSPACE"
-              color: Qt.darker(root.fg, 1.4)
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.caption
-              font.bold: true
-              font.letterSpacing: 1.2
-            }
-          }
-
-          PanelSeparator { foreground: root.fg }
-
-          // ---- App icons
-          SectionTitle { text: "APP ICONS" }
-
-          ToggleSetting {
-            label: "Show app icons"
-            description: root.cfg.showIcons ? "Icons of open apps appear in workspace pills" : "Hidden: workspaces show numbers only"
-            key: "showIcons"
-          }
-
-          ChoiceSetting {
-            visible: root.cfg.showIcons
-            title: "SHOW ICONS ON"
-            key: "showApps"
-            options: [
-              { value: "all", label: "Always" },
-              { value: "active", label: "Active" },
-              { value: "hover", label: "Active + hover" },
-              { value: "hoverOnly", label: "Hover" }
-            ]
-          }
-
-          ChoiceSetting {
-            visible: root.cfg.showIcons
-            title: "ICON STYLE"
-            key: "iconStyle"
-            options: [
-              { value: "color", label: "Color" },
-              { value: "mono", label: "Monochrome" }
-            ]
-          }
-
-          SliderSetting { visible: root.cfg.showIcons; title: "ICON SIZE"; key: "iconSize"; minimum: 12; maximum: 24; suffix: "px" }
-          SliderSetting { visible: root.cfg.showIcons; title: "MAX ICONS PER WORKSPACE"; key: "maxIcons"; minimum: 1; maximum: 20 }
-
-          ToggleSetting { visible: root.cfg.showIcons; label: "Group windows by app"; description: "One icon per app with a window count"; key: "groupApps" }
-          ToggleSetting { visible: root.cfg.showIcons; label: "Dim unfocused windows"; description: "On the active workspace"; key: "dimUnfocused" }
-          ToggleSetting { visible: root.cfg.showIcons; label: "Show focused window title"; description: "Next to its icon"; key: "focusedTitle" }
-          ToggleSetting { visible: root.cfg.showIcons; label: "Agent status"; description: "Badges on terminals running coding agents"; key: "agentStatus" }
-
-          PanelSeparator { foreground: root.fg }
-
-          // ---- Previews
-          SectionTitle { text: "PREVIEWS" }
-
-          ToggleSetting {
-            label: "Workspace previews"
-            description: "Hover another workspace to see a live miniature of it"
-            key: "previews"
-          }
-
-          ChoiceSetting {
-            visible: root.cfg.previews
-            title: "PREVIEW SIZE"
-            key: "previewSize"
-            options: [
-              { value: "small", label: "Small" },
-              { value: "medium", label: "Medium" },
-              { value: "large", label: "Large" }
-            ]
-          }
-
-          ToggleSetting {
-            visible: root.cfg.previews
-            label: "Live video"
-            description: "Off shows a still frame and saves power"
-            key: "previewLive"
-          }
-
-          PanelSeparator { foreground: root.fg }
-
-          // ---- Appearance
-          SectionTitle { text: "APPEARANCE" }
-
-          ChoiceSetting {
-            title: "ACTIVE WORKSPACE"
-            key: "activeStyle"
-            options: [
-              { value: "subtle", label: "Subtle" },
-              { value: "solid", label: "Solid" },
-              { value: "accent", label: "Accent" }
-            ]
-          }
-
-          ChoiceSetting {
-            title: "WORKSPACE LABEL"
-            key: "labelStyle"
-            options: [
-              { value: "number", label: "Number" },
-              { value: "glyph", label: "Glyph" },
-              { value: "none", label: "None" }
-            ]
-          }
-
-          ChoiceSetting {
-            title: "DENSITY"
-            key: "density"
-            options: [
-              { value: "compact", label: "Compact" },
-              { value: "normal", label: "Normal" },
-              { value: "roomy", label: "Roomy" }
-            ]
-          }
-
-          ChoiceSetting {
-            title: "SETTINGS BUTTON"
-            key: "settingsButton"
-            options: [
-              { value: "hover", label: "On hover" },
-              { value: "always", label: "Always" },
-              { value: "never", label: "Hidden" }
-            ]
-          }
-
-          ToggleSetting { label: "Highlight urgent windows"; description: "Pulse workspaces with windows asking for attention"; key: "urgentHighlight" }
-          ToggleSetting { label: "Tooltips"; description: "Window titles on hover"; key: "tooltips" }
-
-          PanelSeparator { foreground: root.fg }
-
-          // ---- Workspaces
-          SectionTitle { text: "WORKSPACES" }
-
-          SliderSetting { title: "ALWAYS SHOW WORKSPACES"; key: "persistentWorkspaces"; minimum: 0; maximum: 10 }
-          ToggleSetting { label: "Hide empty workspaces"; key: "hideEmpty" }
-          ToggleSetting { label: "Only this monitor's workspaces"; key: "perMonitor" }
-
-          PanelSeparator { foreground: root.fg }
-
-          // ---- Behavior
-          SectionTitle { text: "BEHAVIOR" }
-
-          ChoiceSetting {
-            title: "CLICKING THE ACTIVE WORKSPACE"
-            key: "activeClick"
-            options: [
-              { value: "none", label: "Does nothing" },
-              { value: "previous", label: "Goes back" }
-            ]
-          }
-
-          ToggleSetting { label: "Scroll to switch workspaces"; key: "scrollSwitch" }
-          ToggleSetting { label: "Middle-click icon closes window"; key: "middleClickClose" }
-
-          PanelSeparator { foreground: root.fg }
-
-          // ---- Animation
-          SectionTitle { text: "ANIMATION" }
-
-          ToggleSetting { label: "Animations"; key: "animations" }
-
-          ChoiceSetting {
-            visible: root.cfg.animations
-            title: "SPEED"
-            key: "animationSpeed"
-            options: [
-              { value: "slow", label: "Slow" },
-              { value: "normal", label: "Normal" },
-              { value: "fast", label: "Fast" }
-            ]
-          }
-
-          PanelSeparator { foreground: root.fg }
-
-          Button {
-            text: "Reset to defaults"
-            foreground: root.fg
-            fontFamily: root.fontFamily
-            fontSize: Style.font.bodySmall
-            bordered: true
-            horizontalPadding: Style.spacing.controlPaddingX
-            verticalPadding: Style.spacing.controlPaddingY
-            onClicked: root.resetSettings()
-          }
-        }
-      }
-    }
-  }
-
-  component SectionTitle: Text {
-    color: root.fg
-    font.family: root.fontFamily
-    font.pixelSize: Style.font.subtitle
-    font.bold: true
-  }
-
-  component ChoiceSetting: Column {
-    property string title: ""
-    property string key: ""
-    property var options: []
-
-    width: parent ? parent.width : 0
-    spacing: Style.space(8)
-
-    PanelSectionHeader {
-      text: parent.title
-      foreground: root.fg
-      fontFamily: root.fontFamily
-    }
-
-    ButtonGroup {
-      options: parent.options
-      value: String(root.cfg[parent.key])
-      foreground: root.fg
-      fontFamily: root.fontFamily
-      fontSize: Style.font.bodySmall
-      focusable: false
-      onChanged: function(value) {
-        var delta = ({})
-        delta[parent.key] = value
-        root.applySetting(delta)
-      }
-    }
-  }
-
-  component SliderSetting: Column {
-    id: sliderSetting
-    property string title: ""
-    property string key: ""
-    property int minimum: 0
-    property int maximum: 10
-    property string suffix: ""
-
-    width: parent ? parent.width : 0
-    spacing: Style.space(8)
-
-    Item {
-      width: parent.width
-      implicitHeight: sliderHeader.implicitHeight
-      PanelSectionHeader {
-        id: sliderHeader
-        text: sliderSetting.title
-        foreground: root.fg
-        fontFamily: root.fontFamily
-      }
-      Text {
-        anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        text: Math.round(slider.liveValue) + sliderSetting.suffix
-        color: root.fg
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.bodySmall
-        font.bold: true
-      }
-    }
-
-    PanelSlider {
-      id: slider
-      width: parent.width
+      cfg: root.cfg
       bar: root.bar
-      minimum: sliderSetting.minimum
-      maximum: sliderSetting.maximum
-      step: 1
-      integer: true
-      value: Number(root.cfg[sliderSetting.key])
-      onReleased: function(value) {
-        var delta = ({})
-        delta[sliderSetting.key] = Math.round(value)
-        root.applySetting(delta)
+      fg: root.fg
+      fontFamily: root.fontFamily
+      onSettingChanged: function(delta) { root.applySetting(delta) }
+      onResetRequested: root.resetSettings()
+      onCloseRequested: root.close()
+      Connections {
+        target: root
+        function onOpenedChanged() { settingsForm.confirmingReset = false }
       }
-    }
-  }
-
-  component ToggleSetting: Toggle {
-    property string key: ""
-    width: parent ? parent.width : 0
-    checked: root.cfg[key] === true
-    foreground: root.fg
-    fontFamily: root.fontFamily
-    onClicked: {
-      var delta = ({})
-      delta[key] = !checked
-      root.applySetting(delta)
     }
   }
 }

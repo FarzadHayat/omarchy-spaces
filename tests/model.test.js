@@ -105,7 +105,7 @@ test("new settings validate", () => {
   assert.strictEqual(s.density, "normal")
   assert.strictEqual(s.iconStyle, "mono")
   assert.strictEqual(s.activeClick, "previous")
-  assert.strictEqual(s.settingsButton, "hover")
+  assert.strictEqual(s.settingsButton, "never")
   assert.strictEqual(s.showIcons, true)
 })
 
