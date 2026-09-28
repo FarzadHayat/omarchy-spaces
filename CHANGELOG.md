@@ -4,6 +4,9 @@
 
 - Changing the animation speed, or turning animations off and on, no longer
   hides every workspace pill until the shell restarts (#9)
+- Agent status: the widget rechecks live `working` and `waiting` claims against
+  Linux process state every minute, so a crashed agent no longer leaves a
+  permanent badge. Finished claims are preserved until acknowledged
 
 ## 1.0.0
 
