@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Agent status: the widget rechecks live `working` and `waiting` claims against
+  Linux process state every minute, so a crashed agent no longer leaves a
+  permanent badge. Finished claims are preserved until acknowledged
+
 ## 1.0.0
 
 First stable release, ready for the Omarchy plugin marketplace.
