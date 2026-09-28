@@ -27,6 +27,9 @@
 //       "sessionStart":         [{ "command": "cursor-spaces-hook", "timeout": 10 }],
 //       "preToolUse":           [{ "command": "cursor-spaces-hook", "timeout": 10 }],
 //       "beforeShellExecution": [{ "command": "cursor-spaces-hook", "timeout": 10 }],
+//       "afterShellExecution":  [{ "command": "cursor-spaces-hook", "timeout": 10 }],
+//       "afterFileEdit":        [{ "command": "cursor-spaces-hook", "timeout": 10 }],
+//       "postToolUse":          [{ "command": "cursor-spaces-hook", "timeout": 10 }],
 //       "afterAgentThought":    [{ "command": "cursor-spaces-hook", "timeout": 10 }],
 //       "stop":                 [{ "command": "cursor-spaces-hook", "timeout": 10, "loop_limit": null }],
 //       "sessionEnd":           [{ "command": "cursor-spaces-hook", "timeout": 10 }]

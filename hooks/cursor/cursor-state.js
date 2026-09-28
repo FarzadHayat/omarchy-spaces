@@ -16,10 +16,10 @@
 //   "end"      the conversation closed: sessionEnd
 //
 // Deliberately absent: "waiting". Cursor exposes no hook for "the agent
-// asked the user a question", so a waiting badge would be a guess. Everything
-// else (afterAgentResponse, postToolUse, preCompact, subagents, Tab hooks)
-// holds: afterAgentResponse fires mid-turn before tool calls, so reporting
-// done there would strobe the badge every turn.
+// asked the user a question", so a waiting badge would be a guess. Also
+// silent: afterAgentResponse (fires mid-turn before tool calls, so reporting
+// done there would strobe every turn), postToolUseFailure, preCompact,
+// subagents, and Tab hooks.
 
 // Events that mean the agent is (still) working.
 const WORKING = new Set([
@@ -28,6 +28,13 @@ const WORKING = new Set([
   "preToolUse",
   "beforeShellExecution",
   "afterAgentThought",
+  // Tool completions also mean working. cursor-agent in a terminal never
+  // fires beforeSubmitPrompt for queued follow-ups, so without these the
+  // badge sits on done until late in the next turn, then flickers
+  // working -> done. Any tool activity restarts the working signal instead.
+  "postToolUse",
+  "afterShellExecution",
+  "afterFileEdit",
 ])
 
 // stateForEvent returns "working", "done", "end", or "" to stay silent.

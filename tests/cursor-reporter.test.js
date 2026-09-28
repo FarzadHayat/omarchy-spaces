@@ -33,6 +33,14 @@ function main() {
       }
     })
 
+    test("tool completions report working for queued CLI turns", () => {
+      // cursor-agent never fires beforeSubmitPrompt for a queued follow-up:
+      // the first sign of the next turn is a tool finishing.
+      for (const event of ["postToolUse", "afterShellExecution", "afterFileEdit"]) {
+        assert.strictEqual(M.stateForEvent(event), "working", event)
+      }
+    })
+
     test("stop reports done whatever the status", () => {
       // The payload status (completed/aborted/error) does not change the
       // badge: only the event name matters.
@@ -48,10 +56,7 @@ function main() {
       // would strobe the badge every turn.
       for (const event of [
         "afterAgentResponse",
-        "postToolUse",
         "postToolUseFailure",
-        "afterShellExecution",
-        "afterFileEdit",
         "preCompact",
         "subagentStart",
         "subagentStop",
