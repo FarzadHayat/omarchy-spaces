@@ -89,6 +89,25 @@ function main() {
       assert.strictEqual(M.sessionKey(), "")
     })
 
+    test("tracked id is the generation id", () => {
+      assert.strictEqual(M.trackedId({ generation_id: "g1" }), "g1")
+      assert.strictEqual(M.trackedId({}), "")
+      assert.strictEqual(M.trackedId(), "")
+    })
+
+    test("a stop with nothing pending leaves no pending turn", () => {
+      assert.strictEqual(M.hasPendingTurn([], []), false)
+      assert.strictEqual(M.hasPendingTurn([], ["g1"]), false)
+      assert.strictEqual(M.hasPendingTurn(["g1"], ["g1"]), false)
+    })
+
+    test("an unstopped submit is a pending turn", () => {
+      // Two queued prompts, first turn stopped: the follow-up starts with
+      // no event, so done must wait for its stop.
+      assert.strictEqual(M.hasPendingTurn(["g1", "g2"], ["g1"]), true)
+      assert.strictEqual(M.hasPendingTurn(["g1", "g2"], ["g1", "g2"]), false)
+    })
+
     if (failed) {
       console.log(failed + " FAILURES")
       process.exit(1)

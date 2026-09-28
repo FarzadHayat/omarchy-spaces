@@ -20,6 +20,28 @@
 // silent: afterAgentResponse (fires mid-turn before tool calls, so reporting
 // done there would strobe every turn), postToolUseFailure, preCompact,
 // subagents, and Tab hooks.
+//
+// Queued prompts need more than the map above. Each submitted prompt carries
+// its own generation_id, and a queued follow-up starts with no event at all:
+// its beforeSubmitPrompt already fired while the previous turn was running.
+// So "stop" only means "done" when every submitted generation has stopped.
+// The reporter persists the two id sets per session (one file per id, so
+// concurrent hook runs cannot lose an update) and asks hasPendingTurn
+// before reporting done:
+
+// trackedId returns the turn id carried by submit/stop events, or "" when
+// the payload has none (older payloads, mid-session installs).
+export function trackedId(payload = {}) {
+  return payload.generation_id || ""
+}
+
+// hasPendingTurn is true while a submitted turn has no matching stop.
+// A stop for an untracked turn (hook installed mid-session) leaves no
+// pending turn, so it still reports done exactly once.
+export function hasPendingTurn(submitted, stopped) {
+  const done = new Set(stopped)
+  return submitted.some((id) => !done.has(id))
+}
 
 // Events that mean the agent is (still) working.
 const WORKING = new Set([
