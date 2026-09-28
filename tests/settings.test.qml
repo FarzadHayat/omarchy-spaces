@@ -6,7 +6,8 @@ import qs.Commons
 import "Model.js" as Model
 Window {
   visible: true
-  width: 520; height: 640
+  width: 680
+  height: Math.max(520, form.implicitHeight) + 32
   SpacesSettings {
     id: form
     anchors.fill: parent
@@ -73,6 +74,16 @@ Window {
       mouseClick(find(form, "key", "showIcons"))
       equal(form.cfg.showIcons, false)
       equal(find(form, "key", "iconSize").visible, false)
+      form.cfg = Model.resolveSettings({focusedTitle: true})
+      for (var section of ["icons", "windows", "appearance", "workspaces", "previews", "behavior"]) {
+        form.section = section
+        form.confirmingReset = true
+        wait(50)
+        var content = find(form, "objectName", "settingsContent")
+        var footer = find(form, "objectName", "settingsFooter")
+        if (content.y + content.implicitHeight > footer.y)
+          throw new Error("Settings overlap the footer in " + section)
+      }
       console.log("All settings assertions completed")
     }
   }

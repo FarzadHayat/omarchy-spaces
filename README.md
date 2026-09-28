@@ -83,7 +83,7 @@ If you added the agent hooks or the settings key below, delete those lines from 
 
 <img src=".github/assets/settings.png" width="330" align="right" alt="Spaces settings panel" />
 
-Settings are organised into App icons, Appearance, Workspaces, Previews, and Behaviour. Navigation stays visible while you scroll, and changes apply automatically and are saved to `~/.config/omarchy/shell.json`.
+Settings are organised into App icons, Windows, Appearance, Workspaces, Previews, and Behaviour. Each section fits its controls without an internal scroll area, and changes apply automatically and are saved to `~/.config/omarchy/shell.json`.
 
 Use Tab / Shift+Tab to move through controls and Enter / Space to activate them. On sliders, use Left / Right to adjust by one, or Home / End for the minimum or maximum. Reset to defaults asks for confirmation before resetting all sections.
 

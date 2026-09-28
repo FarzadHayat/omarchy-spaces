@@ -1259,8 +1259,8 @@ Panel {
     bar: root.bar
     open: root.opened
     focusTarget: settingsForm
-    contentWidth: panel.fittedContentWidth(Style.space(520))
-    contentHeight: panel.fittedContentHeight(Style.space(640))
+    contentWidth: panel.fittedContentWidth(Style.space(680))
+    contentHeight: panel.fittedContentHeight(Math.max(Style.space(520), settingsForm.implicitHeight))
 
     SpacesSettings {
       id: settingsForm

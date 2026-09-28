@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls as Controls
 import qs.Commons
 import qs.Ui
 
@@ -17,13 +16,9 @@ Item {
   signal closeRequested()
 
   function applySetting(delta) { settingChanged(delta) }
-  function reveal(item) {
-    var point = item.mapToItem(form, 0, 0)
-    if (point.y < scroll.contentY) scroll.contentY = point.y
-    else if (point.y + item.height > scroll.contentY + scroll.height)
-      scroll.contentY = point.y + item.height - scroll.height
-  }
-  onSectionChanged: { scroll.contentY = 0; confirmingReset = false }
+  implicitHeight: header.implicitHeight + Math.max(navigation.implicitHeight, form.implicitHeight)
+    + footer.implicitHeight + Style.space(40)
+  onSectionChanged: confirmingReset = false
   Keys.onEscapePressed: {
     if (confirmingReset) confirmingReset = false
     else closeRequested()
@@ -52,15 +47,23 @@ Item {
         onClicked: root.closeRequested()
       }
     }
-    Flow {
-      width: parent.width
+    PanelSeparator { foreground: root.fg }
+  }
+
+  Column {
+    id: navigation
+    anchors.top: header.bottom
+    anchors.topMargin: Style.space(16)
+    width: Style.space(126)
       spacing: Style.space(6)
       Repeater {
-        model: [{value: "icons", label: "App icons"}, {value: "appearance", label: "Appearance"},
+        model: [{value: "icons", label: "App icons"}, {value: "windows", label: "Windows"}, {value: "appearance", label: "Appearance"},
                 {value: "workspaces", label: "Workspaces"}, {value: "previews", label: "Previews"},
                 {value: "behavior", label: "Behaviour"}]
         delegate: Button {
           required property var modelData
+          width: navigation.width
+          leftAlign: true
           text: modelData.label
           selected: root.section === modelData.value
           bordered: true
@@ -72,31 +75,18 @@ Item {
         }
       }
     }
-    PanelSeparator { foreground: root.fg }
-  }
-
-  Flickable {
-    id: scroll
-    anchors.top: header.bottom
-    anchors.topMargin: Style.space(14)
-    anchors.bottom: footer.top
-    anchors.bottomMargin: Style.space(14)
-    width: parent.width
-    contentWidth: width
-    contentHeight: form.implicitHeight
-    boundsBehavior: Flickable.StopAtBounds
-    clip: true
-    Controls.ScrollBar.vertical: Controls.ScrollBar {
-      policy: Controls.ScrollBar.AsNeeded
-      active: true
-    }
-    Column {
+  Column {
       id: form
-      width: parent.width - Style.space(14)
-      spacing: Style.space(14)
+      objectName: "settingsContent"
+      anchors.top: header.bottom
+      anchors.topMargin: Style.space(16)
+      anchors.left: navigation.right
+      anchors.leftMargin: Style.space(20)
+      anchors.right: parent.right
+      spacing: Style.space(12)
       Column {
         width: parent.width
-        spacing: Style.space(14)
+        spacing: Style.space(12)
         visible: root.section === "icons"
           // ---- App icons
           SectionTitle { text: "APP ICONS" }
@@ -132,16 +122,25 @@ Item {
           SliderSetting { visible: root.cfg.showIcons; title: "ICON SIZE"; key: "iconSize"; minimum: 12; maximum: 24; suffix: "px" }
           SliderSetting { visible: root.cfg.showIcons; title: "MAX ICONS PER WORKSPACE"; key: "maxIcons"; minimum: 1; maximum: 20 }
 
+
+      }
+      Column {
+        width: parent.width
+        spacing: Style.space(12)
+        visible: root.section === "windows"
+        SectionTitle { text: "WINDOWS" }
           ToggleSetting { visible: root.cfg.showIcons; label: "Group windows by app"; description: "One icon per app with a window count"; key: "groupApps" }
           ToggleSetting { visible: root.cfg.showIcons; label: "Dim unfocused windows"; description: "On the active workspace"; key: "dimUnfocused" }
           ToggleSetting { visible: root.cfg.showIcons; label: "Show focused window title"; description: "Next to its icon"; key: "focusedTitle" }
           SliderSetting { visible: root.cfg.showIcons && root.cfg.focusedTitle; title: "TITLE LENGTH"; key: "titleLength"; minimum: 8; maximum: 60; suffix: " characters" }
           ToggleSetting { visible: root.cfg.showIcons; label: "Agent status"; description: "Badges on terminals running coding agents"; key: "agentStatus" }
 
+        ToggleSetting { label: "Highlight urgent windows"; description: "Pulse workspaces asking for attention"; key: "urgentHighlight" }
+        ToggleSetting { label: "Tooltips"; description: "Window titles on hover"; key: "tooltips" }
       }
       Column {
         width: parent.width
-        spacing: Style.space(14)
+        spacing: Style.space(12)
         visible: root.section === "appearance"
           // ---- Appearance
           SectionTitle { text: "APPEARANCE" }
@@ -186,13 +185,11 @@ Item {
             ]
           }
 
-          ToggleSetting { label: "Highlight urgent windows"; description: "Pulse workspaces with windows asking for attention"; key: "urgentHighlight" }
-          ToggleSetting { label: "Tooltips"; description: "Window titles on hover"; key: "tooltips" }
 
       }
       Column {
         width: parent.width
-        spacing: Style.space(14)
+        spacing: Style.space(12)
         visible: root.section === "workspaces"
           // ---- Workspaces
           SectionTitle { text: "WORKSPACES" }
@@ -204,7 +201,7 @@ Item {
       }
       Column {
         width: parent.width
-        spacing: Style.space(14)
+        spacing: Style.space(12)
         visible: root.section === "previews"
           // ---- Previews
           SectionTitle { text: "PREVIEWS" }
@@ -236,7 +233,7 @@ Item {
       }
       Column {
         width: parent.width
-        spacing: Style.space(14)
+        spacing: Style.space(12)
         visible: root.section === "behavior"
           // ---- Behavior
           SectionTitle { text: "BEHAVIOR" }
@@ -270,11 +267,11 @@ Item {
           }
 
       }
-    }
   }
 
   Column {
     id: footer
+    objectName: "settingsFooter"
     anchors.bottom: parent.bottom
     width: parent.width
     spacing: Style.space(8)
@@ -351,7 +348,6 @@ Item {
           fontFamily: root.fontFamily
           fontSize: Style.font.bodySmall
           focusable: true
-          onActiveFocusChanged: if (activeFocus) root.reveal(choices.parent)
           onClicked: {
             var delta = ({})
             delta[choices.settingKey] = modelData.value
@@ -396,7 +392,6 @@ Item {
     PanelSlider {
       id: slider
       activeFocusOnTab: true
-      onActiveFocusChanged: if (activeFocus) root.reveal(sliderSetting)
       Keys.onLeftPressed: released(Math.max(minimum, value - 1))
       Keys.onRightPressed: released(Math.min(maximum, value + 1))
       Keys.onPressed: function(event) {
@@ -429,7 +424,6 @@ Item {
   component ToggleSetting: Toggle {
     property string key: ""
     width: parent ? parent.width : 0
-    onActiveFocusChanged: if (activeFocus) root.reveal(this)
     checked: root.cfg[key] === true
     foreground: root.fg
     fontFamily: root.fontFamily
