@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Changing the animation speed, or turning animations off and on, no longer
+  hides every workspace pill until the shell restarts (#9)
+
 ## 1.0.0
 
 First stable release, ready for the Omarchy plugin marketplace.

@@ -607,11 +607,12 @@ Panel {
         readonly property real pad: Style.space(label === "" ? 3 : root.metrics.pad)
 
         // Appear animation lives on the delegate: positioner add transitions
-        // can be interrupted and leave items stuck half faded.
-        property real appear: root.dur > 0 ? 0 : 1
+        // can be interrupted and leave items stuck half faded. No binding on
+        // root.dur: changing the animation speed would hide every pill.
+        property real appear: 1
         opacity: appear
         scale: 0.6 + 0.4 * appear
-        Component.onCompleted: if (root.dur > 0) pillAppear.start()
+        Component.onCompleted: if (root.dur > 0) { appear = 0; pillAppear.start() }
         NumberAnimation { id: pillAppear; target: pill; property: "appear"; to: 1; duration: root.dur; easing.type: Easing.OutBack }
 
         width: implicitWidth
@@ -731,10 +732,10 @@ Panel {
                   height: implicitHeight
                   property real dim: root.cfg.dimUnfocused && pill.active && !focusedHere && !hovered ? 0.5 : 1
                   Behavior on dim { enabled: root.fastDur > 0; NumberAnimation { duration: root.fastDur } }
-                  property real appear: root.dur > 0 ? 0 : 1
+                  property real appear: 1
                   opacity: Math.min(1, appear)
                   scale: 0.4 + 0.6 * appear
-                  Component.onCompleted: if (root.dur > 0) iconAppear.start()
+                  Component.onCompleted: if (root.dur > 0) { appear = 0; iconAppear.start() }
                   NumberAnimation { id: iconAppear; target: appIcon; property: "appear"; to: 1; duration: root.dur; easing.type: Easing.OutBack }
                   Behavior on implicitWidth { enabled: root.dur > 0; NumberAnimation { duration: root.dur; easing.type: Easing.OutCubic } }
 
