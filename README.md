@@ -73,6 +73,9 @@ extensions:
 Restart `omp`, run a prompt, and the terminal icon spins in the bar while it works and gets a check mark when it stops.
 
 `working` and `done` are reported as omp works. `waiting` appears when a tool needs approval — in non-yolo mode (`tools.approvalMode: write` or `always-ask`) or when the agent calls the `ask` tool — and waits 1.5s before showing a `!` so a prompt answered instantly never flashes. Two limits are worth knowing: dialogs opened by *other* extensions through `ctx.ui.confirm` or `ctx.ui.select` cannot be observed and never show a badge, and only the main session reports, because subagents share the parent process.
+### Cursor
+
+`hooks/cursor/cursor-reporter.js` reports Cursor agent activity through the same command, so a Cursor window (or a terminal running `cursor-agent`) gets the same badge: spinner while it works, check mark when the turn finishes. See `hooks/cursor/README.md` to register the hook. There is no `waiting` badge for Cursor: it exposes no hook for "the agent asked the user a question".
 
 ## Install
 
