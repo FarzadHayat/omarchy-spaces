@@ -223,7 +223,8 @@ Panel {
     // Never reap on a broken probe: an empty result must mean dead agents,
     // not a failed check.
     if (!seen || failed) return
-    root.agents = Model.pruneDeadAgents(root.agents, alive)
+    // pruneDeadAgents takes an array; liveAgentPids is a dedup map.
+    root.agents = Model.pruneDeadAgents(root.agents, Object.keys(alive))
   }
 
   // Seeing a finished agent's window clears its check mark.
