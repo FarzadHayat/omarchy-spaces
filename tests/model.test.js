@@ -258,4 +258,25 @@ test("parsePids drops junk and init", () => {
   assert.deepStrictEqual(M.parsePids("12,abc,1,,34"), [12, 34])
 })
 
+// Apps and web pages set their own window titles. Qt guesses rich text by
+// default, so a title with markup could load remote images in the shell.
+test("window titles render as plain text", () => {
+  const qml = fs.readFileSync(path.join(__dirname, "..", "Spaces.qml"), "utf8")
+  const blocks = []
+  const re = /^\s*Text\s*\{/gm
+  let m
+  while ((m = re.exec(qml))) {
+    let depth = 0, i = qml.indexOf("{", m.index)
+    const start = i
+    for (; i < qml.length; i++) {
+      if (qml[i] === "{") depth++
+      else if (qml[i] === "}" && --depth === 0) break
+    }
+    blocks.push(qml.slice(start, i + 1))
+  }
+  const titled = blocks.filter((b) => /^\s*text:.*title/im.test(b))
+  assert.ok(titled.length >= 2, "expected the focused title and the preview footer")
+  for (const b of titled) assert.match(b, /textFormat:\s*Text\.PlainText/, b.split("\n").find((l) => /text:/.test(l)).trim())
+})
+
 if (failed) { console.log(failed + " failed"); process.exit(1) }

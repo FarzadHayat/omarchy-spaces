@@ -1024,6 +1024,7 @@ Panel {
                       opacity: appIcon.dim
                       anchors.verticalCenter: parent.verticalCenter
                       text: appIcon.titleText
+                      textFormat: Text.PlainText
                       color: pill.textColor
                       font.family: root.fontFamily
                       font.pixelSize: Style.font.bodySmall
@@ -1220,6 +1221,7 @@ Panel {
         width: preview.mapWidth
         readonly property var hovered: root.windowByAddress(root.highlightAddress)
         text: hovered ? hovered.title : "Click a window to jump to it"
+        textFormat: Text.PlainText
         color: root.fg
         opacity: hovered ? 0.9 : 0.5
         elide: Text.ElideRight
