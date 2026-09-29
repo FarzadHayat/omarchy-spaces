@@ -1,17 +1,22 @@
 # Changelog
 
-## Unreleased
+## 1.1.0
 
-- Changing the animation speed, or turning animations off and on, no longer
-  hides every workspace pill until the shell restarts (#9)
-- Agent status: the widget rechecks live `working` and `waiting` claims against
-  Linux process state every minute, so a crashed agent no longer leaves a
-  permanent badge. Finished claims are preserved until acknowledged
-- Agent status: terminals running OpenCode get the same badge as Claude Code
-  terminals. `hooks/opencode-plugin.js` reports through the existing
-  `omarchy-shell ... agent` entry point, so the widget is unchanged. A
-  permission prompt holds off for 1.5s before showing `!`, so OpenCode
-  `--auto` answering its own requests never flashes
+- Settings are organised into six pages: App icons, Windows, Appearance,
+  Workspaces, Previews, and Behaviour. They work from the keyboard, the
+  focused title length can be set, and resetting asks first (#8, @tcballard)
+- The settings gear is off by default. Right-click the widget to open
+  settings, or turn the gear on under Appearance; it now sits in a fixed slot
+  before the workspaces (#8)
+- Agent status for OpenCode: link `hooks/opencode-plugin.js` into OpenCode and
+  its terminals get the same badges as Claude Code. A permission prompt waits
+  1.5s before showing `!`, so `--auto` never flashes (#4, @FarzadHayat)
+- Agent status: a `working` or `waiting` badge left behind by a crashed agent
+  clears within a minute (#3, @FarzadHayat)
+- Previews fit portrait and rotated monitors (#6, @VulpesZerda27)
+- Fixed: changing the animation speed, or turning animations off and on, hid
+  every workspace pill until the shell restarted (#9, reported by @movshuri,
+  fix by @Coding-Sparrow)
 
 ## 1.0.0
 
