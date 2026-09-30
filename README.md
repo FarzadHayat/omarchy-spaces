@@ -58,6 +58,22 @@ The link points into the installed plugin, so `omarchy plugin update tornikegoma
 
 `working` and `done` are reported as OpenCode works. `waiting` needs a permission prompt, so with `--auto` it rarely appears: OpenCode answers its own permission requests in milliseconds, and the plugin waits 1.5s before showing a `!` so a prompt answered instantly never flashes. To see it, run `opencode` without `--auto` and ask it to do something that needs approval.
 
+### omp
+
+`hooks/omp-extension.js` is an [oh-my-pi](https://github.com/can1357/oh-my-pi) extension that reports for you, so a terminal running `omp` gets the same badge a Claude Code terminal gets. It reports through the `omarchy-shell` command above, so nothing else is needed.
+
+To turn it on, add it to your omp config:
+
+```yaml
+# ~/.omp/agent/config.yml
+extensions:
+  - ~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/omp-extension.js
+```
+
+Restart `omp`, run a prompt, and the terminal icon spins in the bar while it works and gets a check mark when it stops.
+
+`working` and `done` are reported as omp works. `waiting` appears when a tool needs approval — in non-yolo mode (`tools.approvalMode: write` or `always-ask`) or when the agent calls the `ask` tool — and waits 1.5s before showing a `!` so a prompt answered instantly never flashes. Two limits are worth knowing: dialogs opened by *other* extensions through `ctx.ui.confirm` or `ctx.ui.select` cannot be observed and never show a badge, and only the main session reports, because subagents share the parent process.
+
 ## Install
 
 ```sh
@@ -69,7 +85,7 @@ Requirements:
 
 - Omarchy 4 with the Quickshell bar (Hyprland 0.56 or newer)
 - `jq` for the agent hook (installed with Omarchy)
-- Claude Code or OpenCode, only for agent status
+- Claude Code, OpenCode, or omp, only for agent status
 
 Works with the bar on any edge of the screen. Tested on a single monitor.
 
@@ -92,6 +108,8 @@ If you added the agent hooks or the settings key below, delete those lines from 
 ```sh
 rm ~/.config/opencode/plugins/spaces.js
 ```
+
+If you added the omp extension line, delete it from `~/.omp/agent/config.yml`, or omp will keep loading a path that no longer exists.
 
 ## Using it
 
@@ -138,6 +156,7 @@ ln -sfn "$PWD" ~/.config/omarchy/plugins/tornikegomareli.spaces
 omarchy plugin enable tornikegomareli.spaces
 node tests/model.test.js
 node tests/opencode-plugin.test.js
+node tests/omp-extension.test.js
 bash tests/settings.sh
 # Optional: opens a temporary Wayland window to test the settings gear
 bash tests/gear.sh
