@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Agent status: terminals running omp (oh-my-pi) get the same badge as Claude
+  Code terminals. `hooks/omp-extension.js` reports through the existing
+  `omarchy-shell ... agent` entry point, so the widget is unchanged. An
+  approval prompt holds off for 1.5s before showing `!`, so a quick answer
+  never flashes
+
 ## 1.1.0
 
 - Settings are organised into six pages: App icons, Windows, Appearance,
