@@ -107,6 +107,8 @@ test("new settings validate", () => {
   assert.strictEqual(s.activeClick, "previous")
   assert.strictEqual(s.settingsButton, "never")
   assert.strictEqual(s.showIcons, true)
+  assert.strictEqual(s.pillBackground, true)
+  assert.strictEqual(M.resolveSettings({ pillBackground: false }).pillBackground, false)
 })
 
 test("normalizeAddress strips 0x and lowercases", () => {
