@@ -1,12 +1,21 @@
 # Changelog
 
-## Unreleased
+## 1.2.0
 
-- Agent status: terminals running omp (oh-my-pi) get the same badge as Claude
-  Code terminals. `hooks/omp-extension.js` reports through the existing
-  `omarchy-shell ... agent` entry point, so the widget is unchanged. An
-  approval prompt holds off for 1.5s before showing `!`, so a quick answer
-  never flashes
+- Agent status for omp (oh-my-pi): add `hooks/omp-extension.js` to your omp
+  config and its terminals get the same badges as Claude Code. An approval
+  prompt waits 1.5s before showing `!`, so a quick answer never flashes
+  (#14, @a-lang)
+- A "Pill background" setting under Appearance hides the faint fill behind
+  occupied and hovered workspaces. The active workspace keeps its highlight
+  (#1, @tseluka)
+- A workspace that shows a single icon no longer highlights it as focused
+  (#12, #13, @tseluka)
+- Sharper app icons, and an app with no icon shows the first letter of its own
+  name instead of a shared prefix, so `org.omarchy.herdr` reads "H", not "O"
+  (#10, @Natetgmaxwell)
+- Security: window titles in the bar and in previews render as plain text, so
+  a title with markup can no longer load remote images in the shell
 
 ## 1.1.0
 
