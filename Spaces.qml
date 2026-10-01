@@ -888,15 +888,24 @@ Panel {
                         id: iconImage
                         anchors.fill: parent
                         source: appIcon.info.source
-                        sourceSize.width: root.iconPx * 2
-                        sourceSize.height: root.iconPx * 2
+                        // Decode well above the drawn size: these land at
+                        // roughly 16px on the bar, where every sample counts.
+                        sourceSize.width: root.iconPx * 3
+                        sourceSize.height: root.iconPx * 3
                         fillMode: Image.PreserveAspectFit
                         smooth: true
-                        mipmap: true
+                        // mipmap softens at this size, and nothing here is
+                        // downscaled far enough to need it.
+                        mipmap: false
                         asynchronous: true
                         visible: status === Image.Ready
                         opacity: appIcon.dim
                         layer.enabled: root.cfg.iconStyle === "mono"
+                        // Without an explicit size the layer is rasterised at
+                        // the item's logical size, throwing the extra detail
+                        // away before the effect ever samples it.
+                        layer.textureSize: Qt.size(root.iconPx * 3, root.iconPx * 3)
+                        layer.smooth: true
                         layer.effect: MultiEffect { saturation: -1.0 }
                       }
 
@@ -909,7 +918,7 @@ Panel {
                         color: Util.alpha(pill.textColor, 0.2)
                         Text {
                           anchors.centerIn: parent
-                          text: String(appIcon.info.name || (appIcon.item ? appIcon.item.appId : "?")).charAt(0).toUpperCase()
+                          text: Model.fallbackLetter(appIcon.info.name, appIcon.item ? appIcon.item.appId : "")
                           color: pill.textColor
                           font.family: root.fontFamily
                           font.pixelSize: Math.round(root.iconPx * 0.62)

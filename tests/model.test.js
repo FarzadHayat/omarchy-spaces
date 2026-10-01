@@ -211,6 +211,18 @@ test("appIdCandidates adds the last reverse-DNS segment", () => {
   assert.deepStrictEqual(M.appIdCandidates(""), [])
 })
 
+test("fallbackLetter prefers the readable tail of a reverse-DNS class", () => {
+  // Without this every org.omarchy.* app shares the letter "O".
+  assert.strictEqual(M.fallbackLetter("", "org.omarchy.herdr"), "H")
+  assert.strictEqual(M.fallbackLetter("", "org.omarchy.agent"), "A")
+  // A real desktop-entry name always wins.
+  assert.strictEqual(M.fallbackLetter("Zen Browser", "zen"), "Z")
+  // appId echoed back as the name is not a real name.
+  assert.strictEqual(M.fallbackLetter("org.kde.dolphin", "org.kde.dolphin"), "D")
+  assert.strictEqual(M.fallbackLetter("", "foot"), "F")
+  assert.strictEqual(M.fallbackLetter("", ""), "")
+})
+
 test("agentStates picks the nearest window and the most urgent state", () => {
   const windows = { 100: true, 200: true, 300: true }
   const agents = {
