@@ -888,12 +888,16 @@ Panel {
                         id: iconImage
                         anchors.fill: parent
                         source: appIcon.info.source
-                        // Decode at exactly the drawn device-pixel size so the
-                        // GPU never resamples; Qt's decoder does the one smooth
-                        // downscale (SVGs rasterise natively at this size).
+                        // Whole-number scales: decode at 2x the drawn
+                        // device-pixel size. Bilinear sampling then averages an
+                        // exact 2x2 block per pixel, which is crisper than a 1:1
+                        // decode and, unlike 3x without mipmaps, skips no texels.
+                        // Fractional scales (1.25, 1.5) keep the 3x decode, which
+                        // stays sharper there than a 1:1 decode.
                         readonly property real dpr: Window.window ? Window.window.devicePixelRatio : 1
-                        sourceSize.width: Math.round(root.iconPx * dpr)
-                        sourceSize.height: Math.round(root.iconPx * dpr)
+                        readonly property int decodePx: Math.round(root.iconPx * (dpr === Math.round(dpr) ? dpr * 2 : 3))
+                        sourceSize.width: decodePx
+                        sourceSize.height: decodePx
                         fillMode: Image.PreserveAspectFit
                         smooth: true
                         // mipmap softens at this size, and nothing here is
@@ -906,7 +910,7 @@ Panel {
                         // Without an explicit size the layer is rasterised at
                         // the item's logical size, throwing the extra detail
                         // away before the effect ever samples it.
-                        layer.textureSize: Qt.size(Math.round(root.iconPx * iconImage.dpr), Math.round(root.iconPx * iconImage.dpr))
+                        layer.textureSize: Qt.size(iconImage.decodePx, iconImage.decodePx)
                         layer.smooth: true
                         layer.effect: MultiEffect { saturation: -1.0 }
                       }
