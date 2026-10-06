@@ -73,9 +73,36 @@ extensions:
 Restart `omp`, run a prompt, and the terminal icon spins in the bar while it works and gets a check mark when it stops.
 
 `working` and `done` are reported as omp works. `waiting` appears when a tool needs approval — in non-yolo mode (`tools.approvalMode: write` or `always-ask`) or when the agent calls the `ask` tool — and waits 1.5s before showing a `!` so a prompt answered instantly never flashes. Two limits are worth knowing: dialogs opened by *other* extensions through `ctx.ui.confirm` or `ctx.ui.select` cannot be observed and never show a badge, and only the main session reports, because subagents share the parent process.
+
 ### Cursor
 
-`hooks/cursor/cursor-reporter.js` reports Cursor agent activity through the same command, so a Cursor window (or a terminal running `cursor-agent`) gets the same badge: spinner while it works, check mark when the turn finishes. See `hooks/cursor/README.md` to register the hook. There is no `waiting` badge for Cursor: it exposes no hook for "the agent asked the user a question".
+`hooks/cursor-reporter.js` is a [Cursor](https://cursor.com) hook that reports for you, so a Cursor window (or a terminal running `cursor-agent`) gets the same badge a Claude Code terminal gets. It reports through the `omarchy-shell` command above, so nothing else is needed.
+
+To turn it on, register it in `~/.cursor/hooks.json`:
+
+```json
+{
+  "version": 1,
+  "hooks": {
+    "beforeSubmitPrompt":   [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+    "sessionStart":         [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+    "preToolUse":           [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+    "beforeShellExecution": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+    "afterShellExecution":  [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+    "afterFileEdit":        [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+    "postToolUse":          [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+    "afterAgentThought":    [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+    "stop":                 [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10, "loop_limit": null }],
+    "sessionEnd":           [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }]
+  }
+}
+```
+
+The path lives inside the installed plugin, so `omarchy plugin update tornikegomareli.spaces` keeps the reporter current; there is no npm package. Restart Cursor, run a prompt, and the Cursor window spins in the bar while it works and gets a check mark when it stops.
+
+The `stop` entry needs `"loop_limit": null`: Cursor disables `stop` hooks after 5 runs by default, which would silently kill the reporter mid-session.
+
+`waiting` is not reported: Cursor exposes no hook for "the agent asked the user a question", so a `!` badge would be a guess. `cursor-agent` in a terminal fires only a subset of hooks (`sessionStart`, shell hooks, `postToolUse`, `stop`), so its badge follows the same transitions with coarser steps. A `stop` with an aborted or errored turn still reports `done`; the next prompt flips back to `working`.
 
 ## Install
 
@@ -88,7 +115,7 @@ Requirements:
 
 - Omarchy 4 with the Quickshell bar (Hyprland 0.56 or newer)
 - `jq` for the agent hook (installed with Omarchy)
-- Claude Code, OpenCode, or omp, only for agent status
+- Claude Code, OpenCode, omp, or Cursor, only for agent status
 
 Works with the bar on any edge of the screen. Tested on a single monitor.
 
@@ -113,6 +140,8 @@ rm ~/.config/opencode/plugins/spaces.js
 ```
 
 If you added the omp extension line, delete it from `~/.omp/agent/config.yml`, or omp will keep loading a path that no longer exists.
+
+If you added the Cursor hook, remove those entries from `~/.cursor/hooks.json`.
 
 ## Using it
 

@@ -1,6 +1,6 @@
 // Run: node tests/cursor-reporter.test.js
 //
-// The mapping in hooks/cursor/cursor-state.js decides what the Spaces bar
+// The mapping in hooks/cursor-state.js decides what the Spaces bar
 // shows for each Cursor hook event. It is pure, so it is tested here with no
 // Cursor and no processes.
 const path = require("path")
@@ -19,7 +19,7 @@ function test(name, fn) {
 }
 
 function main() {
-  const file = pathToFileURL(path.join(__dirname, "..", "hooks", "cursor", "cursor-state.js")).href
+  const file = pathToFileURL(path.join(__dirname, "..", "hooks", "cursor-state.js")).href
   return import(file).then((M) => {
     test("work events report working", () => {
       for (const event of [

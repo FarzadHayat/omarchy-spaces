@@ -25,16 +25,16 @@
 //   {
 //     "version": 1,
 //     "hooks": {
-//       "beforeSubmitPrompt":   [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
-//       "sessionStart":         [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
-//       "preToolUse":           [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
-//       "beforeShellExecution": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
-//       "afterShellExecution":  [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
-//       "afterFileEdit":        [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
-//       "postToolUse":          [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
-//       "afterAgentThought":    [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
-//       "stop":                 [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10, "loop_limit": null }],
-//       "sessionEnd":           [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }]
+//       "beforeSubmitPrompt":   [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+//       "sessionStart":         [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+//       "preToolUse":           [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+//       "beforeShellExecution": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+//       "afterShellExecution":  [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+//       "afterFileEdit":        [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+//       "postToolUse":          [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+//       "afterAgentThought":    [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
+//       "stop":                 [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10, "loop_limit": null }],
+//       "sessionEnd":           [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }]
 //     }
 //   }
 //
