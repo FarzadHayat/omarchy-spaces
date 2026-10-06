@@ -24,7 +24,6 @@ function main() {
     test("work events report working", () => {
       for (const event of [
         "beforeSubmitPrompt",
-        "sessionStart",
         "preToolUse",
         "beforeShellExecution",
         "afterAgentThought",
@@ -55,6 +54,7 @@ function main() {
       // afterAgentResponse fires before tool calls, so reporting done there
       // would strobe the badge every turn.
       for (const event of [
+        "sessionStart",
         "afterAgentResponse",
         "postToolUseFailure",
         "preCompact",
@@ -106,6 +106,87 @@ function main() {
       // no event, so done must wait for its stop.
       assert.strictEqual(M.hasPendingTurn(["g1", "g2"], ["g1"]), true)
       assert.strictEqual(M.hasPendingTurn(["g1", "g2"], ["g1", "g2"]), false)
+    })
+
+    test("a submit older than the stopping turn is superseded", () => {
+      // A prompt that never ran (aborted or superseded) must not hold done
+      // forever; a queued follow-up submitted after the running turn began is
+      // newer and survives, so its stop is still awaited.
+      const entries = [
+        { id: "old", mtimeMs: 10 },
+        { id: "running", mtimeMs: 20 },
+        { id: "queued", mtimeMs: 30 },
+      ]
+      assert.deepStrictEqual(M.supersededSubmits(entries, "running"), ["old"])
+      assert.deepStrictEqual(M.supersededSubmits(entries, "missing"), [])
+      assert.deepStrictEqual(M.supersededSubmits([], "running"), [])
+    })
+
+    test("desktop hook reports the Cursor window, not the hook", () => {
+      // Cursor spawns the reporter from a shared NodeService utility process,
+      // then a long-lived main window process (comm "cursor"). The reporter
+      // itself exits the moment it reports, so it must not be first: the
+      // widget's reaper drops a badge whose first pid is dead.
+      const chain = [
+        { pid: 1, comm: "node", cmdline: ["/usr/bin/node", "cursor-reporter.js"], exe: "/usr/bin/node" },
+        {
+          pid: 2,
+          comm: "electron",
+          cmdline: ["/usr/lib/electron42/electron", "--type=utility", "--utility-sub-type=node.mojom.NodeService"],
+          exe: "/usr/lib/electron42/electron",
+        },
+        {
+          pid: 3,
+          comm: "cursor",
+          cmdline: ["/usr/lib/electron42/electron", "/usr/share/cursor/resources/app/cursor.mjs"],
+          exe: "/usr/lib/electron42/electron",
+        },
+        { pid: 4, comm: "systemd", cmdline: ["/sbin/init"], exe: "/sbin/init" },
+      ]
+      const pids = M.reportablePids(chain)
+      assert.deepStrictEqual(pids, [3, 4])
+      assert.notStrictEqual(pids[0], 1, "the one-shot hook must not be first")
+    })
+
+    test("terminal cursor-agent reports the node process, skipping shells", () => {
+      const chain = [
+        { pid: 10, comm: "node", cmdline: ["/usr/bin/node"], exe: "/usr/bin/node" },
+        {
+          pid: 11,
+          comm: "MainThread",
+          cmdline: ["/home/u/.local/share/mise/installs/cursor-agent/2026.10/cursor-agent"],
+          exe: "/home/u/.local/share/mise/installs/cursor-agent/2026.10/node",
+        },
+        { pid: 12, comm: "bash", cmdline: ["bash", "/usr/bin/cursor-agent"], exe: "/usr/bin/bash" },
+        { pid: 13, comm: "ghostty", cmdline: ["ghostty"], exe: "/usr/bin/ghostty" },
+      ]
+      assert.deepStrictEqual(M.reportablePids(chain), [11, 12, 13])
+    })
+
+    test("no named agent falls back to the first non-shell ancestor", () => {
+      const chain = [
+        { pid: 20, comm: "node", cmdline: ["/usr/bin/node"], exe: "/usr/bin/node" },
+        { pid: 21, comm: "sh", cmdline: ["sh", "-c", "reporter"], exe: "/usr/bin/sh" },
+        { pid: 22, comm: "bash", cmdline: ["bash"], exe: "/usr/bin/bash" },
+        { pid: 23, comm: "python", cmdline: ["python", "wrapper.py"], exe: "/usr/bin/python" },
+      ]
+      assert.deepStrictEqual(M.reportablePids(chain), [23])
+    })
+
+    test("a lone hook process reports itself", () => {
+      const chain = [{ pid: 30, comm: "node", cmdline: ["/usr/bin/node"], exe: "/usr/bin/node" }]
+      assert.deepStrictEqual(M.reportablePids(chain), [30])
+      assert.deepStrictEqual(M.reportablePids([]), [])
+    })
+
+    test("agent and shell classification", () => {
+      assert.strictEqual(M.isAgentProcess({ comm: "cursor" }), true)
+      assert.strictEqual(M.isAgentProcess({ comm: "cursor-agent" }), true)
+      assert.strictEqual(M.isAgentProcess({ cmdline: ["/opt/cursor-agent"] }), true)
+      assert.strictEqual(M.isAgentProcess({ com: "electron", cmdline: ["/usr/lib/electron42/electron"], exe: "/usr/lib/electron42/electron" }), false)
+      assert.strictEqual(M.isShellProcess({ comm: "bash" }), true)
+      assert.strictEqual(M.isShellProcess({ comm: "sh" }), true)
+      assert.strictEqual(M.isShellProcess({ comm: "cursor" }), false)
     })
 
     if (failed) {

@@ -12,30 +12,35 @@ Claude Code terminal gets:
 
 ## Install
 
-```sh
-npm install -g @farzadhayat/cursor-spaces
+The reporter ships with the Omarchy Spaces plugin, so it is already on disk at
+
+```
+~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js
 ```
 
-Then register the hooks in `~/.cursor/hooks.json` (covers both the desktop app
-and `cursor-agent`):
+Register it in `~/.cursor/hooks.json` (covers both the desktop app and
+`cursor-agent`):
 
 ```json
 {
   "version": 1,
   "hooks": {
-    "beforeSubmitPrompt": [{ "command": "cursor-spaces-hook", "timeout": 10 }],
-    "sessionStart": [{ "command": "cursor-spaces-hook", "timeout": 10 }],
-    "preToolUse": [{ "command": "cursor-spaces-hook", "timeout": 10 }],
-    "beforeShellExecution": [{ "command": "cursor-spaces-hook", "timeout": 10 }],
-    "afterShellExecution": [{ "command": "cursor-spaces-hook", "timeout": 10 }],
-    "afterFileEdit": [{ "command": "cursor-spaces-hook", "timeout": 10 }],
-    "postToolUse": [{ "command": "cursor-spaces-hook", "timeout": 10 }],
-    "afterAgentThought": [{ "command": "cursor-spaces-hook", "timeout": 10 }],
-    "stop": [{ "command": "cursor-spaces-hook", "timeout": 10, "loop_limit": null }],
-    "sessionEnd": [{ "command": "cursor-spaces-hook", "timeout": 10 }]
+    "beforeSubmitPrompt": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
+    "sessionStart": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
+    "preToolUse": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
+    "beforeShellExecution": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
+    "afterShellExecution": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
+    "afterFileEdit": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
+    "postToolUse": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
+    "afterAgentThought": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }],
+    "stop": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10, "loop_limit": null }],
+    "sessionEnd": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor/cursor-reporter.js", "timeout": 10 }]
   }
 }
 ```
+
+The path lives inside the installed plugin, so `omarchy plugin update
+tornikegomareli.spaces` keeps the reporter current; there is no npm package.
 
 The `stop` entry needs `"loop_limit": null`: Cursor disables `stop` hooks after
 5 runs by default, which would silently kill the reporter mid-session.
@@ -54,8 +59,4 @@ Run an agent prompt and the Cursor window spins in the bar while it works.
 
 ## Uninstall
 
-Remove the entries from `~/.cursor/hooks.json`, then:
-
-```sh
-npm uninstall -g @farzadhayat/cursor-spaces
-```
+Remove the entries from `~/.cursor/hooks.json`.
