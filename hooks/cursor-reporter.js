@@ -26,7 +26,6 @@
 //     "version": 1,
 //     "hooks": {
 //       "beforeSubmitPrompt":   [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
-//       "sessionStart":         [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
 //       "preToolUse":           [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
 //       "beforeShellExecution": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
 //       "afterShellExecution":  [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
@@ -48,7 +47,6 @@
 
 import { spawnSync } from "node:child_process"
 import { mkdirSync, readFileSync, readdirSync, readlinkSync, rmSync, statSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { hasPendingTurn, reportablePids, sessionKey, stateForEvent, supersededSubmits, trackedId } from "./cursor-state.js"
 
@@ -118,17 +116,12 @@ function send(session, state, pids) {
   } catch {}
 }
 
-// Per-user ledger location. XDG_RUNTIME_DIR is private (mode 0700), unlike
-// the shared /tmp, so another local user cannot pre-create the path and have
-// sweepSessions delete through a symlink they planted.
+// Per-user ledger location. Only $XDG_RUNTIME_DIR (mode 0700): a shared /tmp
+// fallback would let another local user plant a symlink and have sweepSessions
+// delete through it. No runtime dir means no ledger (queued-turn hold skips).
 function baseDir() {
   const runtime = process.env.XDG_RUNTIME_DIR
-  if (runtime) return join(runtime, "cursor-spaces")
-  const dir = join(tmpdir(), `cursor-spaces-${process.getuid()}`)
-  try {
-    mkdirSync(dir, { recursive: true, mode: 0o700 })
-  } catch {}
-  return dir
+  return runtime ? join(runtime, "cursor-spaces") : ""
 }
 
 // Per-session turn ledger, so a stop only reports done when no submitted
@@ -137,8 +130,10 @@ function baseDir() {
 // concurrent hook runs cannot lose an update the way read-modify-write of a
 // single JSON file could.
 function sessionDir(session) {
+  const root = baseDir()
+  if (!root) return ""
   const safe = String(session || "unknown").replace(/[^a-zA-Z0-9_-]/g, "_")
-  return join(baseDir(), safe)
+  return join(root, safe)
 }
 
 function listIds(dir) {
@@ -178,8 +173,9 @@ function trackTurn(session, turn, id) {
   if (!id) return false
   try {
     const base = sessionDir(session)
+    if (!base) return false
     const dir = join(base, turn)
-    mkdirSync(dir, { recursive: true })
+    mkdirSync(dir, { recursive: true, mode: 0o700 })
     writeFileSync(join(dir, safeId(id)), "")
     if (turn === "stopped") dropSuperseded(base, id)
     sweepSessions()
@@ -190,8 +186,10 @@ function trackTurn(session, turn, id) {
 }
 
 function forgetSession(session) {
+  const dir = sessionDir(session)
+  if (!dir) return
   try {
-    rmSync(sessionDir(session), { recursive: true, force: true })
+    rmSync(dir, { recursive: true, force: true })
   } catch {}
 }
 
@@ -200,6 +198,7 @@ function forgetSession(session) {
 function sweepSessions() {
   try {
     const root = baseDir()
+    if (!root) return
     const cutoff = Date.now() - 24 * 60 * 60 * 1000
     for (const entry of listIds(root)) {
       const dir = join(root, entry)
@@ -226,9 +225,10 @@ function main() {
   const state = stateForEvent(event)
   if (!state) return
   const session = sessionKey(payload)
+  const pids = reportPids()
   if (event === "sessionEnd") {
     forgetSession(session)
-    send(session, state, reportPids())
+    send(session, state, pids)
     return
   }
   if (event === "beforeSubmitPrompt" || event === "stop") {
@@ -239,7 +239,9 @@ function main() {
       return
     }
   }
-  send(session, state, reportPids())
+  // No long-lived pid means the reaper would clear the badge immediately.
+  if (!pids.length) return
+  send(session, state, pids)
 }
 
 main()

@@ -85,7 +85,6 @@ To turn it on, register it in `~/.cursor/hooks.json`:
   "version": 1,
   "hooks": {
     "beforeSubmitPrompt":   [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
-    "sessionStart":         [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
     "preToolUse":           [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
     "beforeShellExecution": [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
     "afterShellExecution":  [{ "command": "~/.config/omarchy/plugins/tornikegomareli.spaces/hooks/cursor-reporter.js", "timeout": 10 }],
@@ -102,7 +101,7 @@ The path lives inside the installed plugin, so `omarchy plugin update tornikegom
 
 The `stop` entry needs `"loop_limit": null`: Cursor disables `stop` hooks after 5 runs by default, which would silently kill the reporter mid-session.
 
-`waiting` is not reported: Cursor exposes no hook for "the agent asked the user a question", so a `!` badge would be a guess. `cursor-agent` in a terminal fires only a subset of hooks (`sessionStart`, shell hooks, `postToolUse`, `stop`), so its badge follows the same transitions with coarser steps. A `stop` with an aborted or errored turn still reports `done`; the next prompt flips back to `working`.
+`waiting` is not reported: Cursor exposes no hook for "the agent asked the user a question", so a `!` badge would be a guess. `sessionStart` is ignored (an idle agent is not working). `cursor-agent` in a terminal fires only a subset of hooks (shell hooks, `postToolUse`, `stop`), so its badge follows the same transitions with coarser steps. A `stop` with an aborted or errored turn still reports `done`; the next prompt flips back to `working`.
 
 ## Install
 

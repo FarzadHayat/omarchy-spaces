@@ -55,7 +55,7 @@ export function supersededSubmits(entries = [], stoppingId = "") {
   const pivot = entries.find((e) => e.id === stoppingId)
   if (!pivot) return []
   return entries
-    .filter((e) => e.id !== stoppingId && e.mtimeMs < pivot.mtimeMs)
+    .filter((e) => e.id !== stoppingId && e.mtimeMs <= pivot.mtimeMs)
     .map((e) => e.id)
 }
 
@@ -86,15 +86,10 @@ export function stateForEvent(eventName) {
 // sessionKey returns a stable id for the conversation the event belongs to,
 // so the widget badges one entry per chat. conversation_id and session_id
 // are the same identifier; transcript_path is per-conversation, so it works
-// as a fallback where the ids are missing.
+// as a fallback where the ids are missing. workspace_roots is not used: every
+// chat in a folder would share one badge and one turn ledger.
 export function sessionKey(payload = {}) {
-  return (
-    payload.conversation_id ||
-    payload.session_id ||
-    payload.transcript_path ||
-    (Array.isArray(payload.workspace_roots) ? payload.workspace_roots[0] : "") ||
-    ""
-  )
+  return payload.conversation_id || payload.session_id || payload.transcript_path || ""
 }
 
 // --- Which pids to report ----------------------------------------------------
@@ -118,7 +113,7 @@ export function isAgentProcess(proc = {}) {
     comm === "cursor" ||
     comm === "cursor-agent" ||
     argv.some((arg) => /(^|\/)cursor-agent$/.test(arg)) ||
-    argv.some((arg) => /cursor\.mjs$/.test(arg)) ||
+    argv.some((arg) => /(^|\/)cursor\.mjs$/.test(arg)) ||
     /(^|\/)cursor-agent$/.test(exe)
   )
 }
@@ -131,12 +126,14 @@ export function isShellProcess(proc = {}) {
 // reportablePids returns the pids to send, agent first. It drops the reporter
 // process itself, then starts at the first Cursor/cursor-agent ancestor;
 // failing that, at the first non-shell ancestor, so the reaper probes a
-// process that outlives the hook.
+// process that outlives the hook. Shell-only ancestors yield nothing: a
+// short-lived wrapper must not be pids[0].
 export function reportablePids(chain = []) {
   const ancestors = chain.slice(1)
   if (ancestors.length === 0) return chain.length ? [chain[0].pid] : []
   const agentAt = ancestors.findIndex(isAgentProcess)
   if (agentAt >= 0) return ancestors.slice(agentAt).map((p) => p.pid)
   const firstReal = ancestors.findIndex((p) => !isShellProcess(p))
-  return (firstReal > 0 ? ancestors.slice(firstReal) : ancestors).map((p) => p.pid)
+  if (firstReal < 0) return []
+  return ancestors.slice(firstReal).map((p) => p.pid)
 }

@@ -80,8 +80,9 @@ function main() {
       assert.strictEqual(M.sessionKey({ transcript_path: "/tmp/t.json" }), "/tmp/t.json")
     })
 
-    test("session key falls back to the first workspace root", () => {
-      assert.strictEqual(M.sessionKey({ workspace_roots: ["/repo", "/other"] }), "/repo")
+    test("session key ignores workspace roots", () => {
+      // A folder is shared by every chat open there; using it would merge badges.
+      assert.strictEqual(M.sessionKey({ workspace_roots: ["/repo", "/other"] }), "")
     })
 
     test("session key is empty when nothing identifies the chat", () => {
@@ -111,13 +112,24 @@ function main() {
     test("a submit older than the stopping turn is superseded", () => {
       // A prompt that never ran (aborted or superseded) must not hold done
       // forever; a queued follow-up submitted after the running turn began is
-      // newer and survives, so its stop is still awaited.
+      // newer and survives, so its stop is still awaited. Equal mtime also
+      // counts as superseded (filesystem timestamps are coarse).
       const entries = [
         { id: "old", mtimeMs: 10 },
         { id: "running", mtimeMs: 20 },
         { id: "queued", mtimeMs: 30 },
       ]
       assert.deepStrictEqual(M.supersededSubmits(entries, "running"), ["old"])
+      assert.deepStrictEqual(
+        M.supersededSubmits(
+          [
+            { id: "tied", mtimeMs: 20 },
+            { id: "running", mtimeMs: 20 },
+          ],
+          "running",
+        ),
+        ["tied"],
+      )
       assert.deepStrictEqual(M.supersededSubmits(entries, "missing"), [])
       assert.deepStrictEqual(M.supersededSubmits([], "running"), [])
     })
@@ -173,6 +185,16 @@ function main() {
       assert.deepStrictEqual(M.reportablePids(chain), [23])
     })
 
+    test("shell-only ancestors report nothing", () => {
+      // A short-lived wrapper must not be pids[0] or the reaper clears the badge.
+      const chain = [
+        { pid: 20, comm: "node", cmdline: ["/usr/bin/node"], exe: "/usr/bin/node" },
+        { pid: 21, comm: "sh", cmdline: ["sh", "-c", "reporter"], exe: "/usr/bin/sh" },
+        { pid: 22, comm: "bash", cmdline: ["bash"], exe: "/usr/bin/bash" },
+      ]
+      assert.deepStrictEqual(M.reportablePids(chain), [])
+    })
+
     test("a lone hook process reports itself", () => {
       const chain = [{ pid: 30, comm: "node", cmdline: ["/usr/bin/node"], exe: "/usr/bin/node" }]
       assert.deepStrictEqual(M.reportablePids(chain), [30])
@@ -183,6 +205,8 @@ function main() {
       assert.strictEqual(M.isAgentProcess({ comm: "cursor" }), true)
       assert.strictEqual(M.isAgentProcess({ comm: "cursor-agent" }), true)
       assert.strictEqual(M.isAgentProcess({ cmdline: ["/opt/cursor-agent"] }), true)
+      assert.strictEqual(M.isAgentProcess({ cmdline: ["/app/cursor.mjs"] }), true)
+      assert.strictEqual(M.isAgentProcess({ cmdline: ["/app/mycursor.mjs"] }), false)
       assert.strictEqual(M.isAgentProcess({ com: "electron", cmdline: ["/usr/lib/electron42/electron"], exe: "/usr/lib/electron42/electron" }), false)
       assert.strictEqual(M.isShellProcess({ comm: "bash" }), true)
       assert.strictEqual(M.isShellProcess({ comm: "sh" }), true)
