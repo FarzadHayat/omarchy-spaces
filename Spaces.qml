@@ -131,18 +131,26 @@ Panel {
     return map
   }
 
-  readonly property var agentByPid: {
+  readonly property var agentWindows: {
+    var list = []
+    for (var id in root.workspaceMap) {
+      var windows = root.workspaceMap[id].windows
+      for (var i = 0; i < windows.length; i++)
+        list.push({ address: String(windows[i].address), pid: windows[i].pid })
+    }
+    return list
+  }
+
+  readonly property var agentByAddress: {
     if (!root.cfg.agentStatus) return ({})
-    var pids = ({})
-    for (var address in root.pidByAddress) if (root.pidByAddress[address]) pids[root.pidByAddress[address]] = true
-    return Model.agentStates(root.agents, pids)
+    return Model.agentWindowStates(root.agents, root.agentWindows)
   }
 
   function agentStateFor(addresses) {
     var best = ""
     var rank = { waiting: 3, working: 2, done: 1 }
     for (var i = 0; i < addresses.length; i++) {
-      var state = root.agentByPid[root.pidByAddress[addresses[i]]] || ""
+      var state = root.agentByAddress[addresses[i]] || ""
       if (state && (!best || rank[state] > rank[best])) best = state
     }
     return best
@@ -156,9 +164,20 @@ Panel {
     return 0
   }
 
-  function activeWindowPid() {
+  function activeWindowAddress() {
     var active = Hyprland.activeToplevel
-    return active ? (root.pidByAddress[String(active.address)] || 0) : 0
+    return active ? String(active.address) : ""
+  }
+
+  function activeWindowPid() {
+    return root.pidByAddress[root.activeWindowAddress()] || 0
+  }
+
+  // Whether the window showing an agent is the one in focus. A pinned address
+  // is exact; without one, fall back to the shared window PID.
+  function agentWindowMatchesActive(agent) {
+    if (agent.address) return agent.address === root.activeWindowAddress()
+    return root.agentWindowPid(agent) === root.activeWindowPid()
   }
 
   function applyAgent(session, state, pidsCsv) {
@@ -170,9 +189,17 @@ Panel {
     }
     var reported = Model.normalizeAgentState(state)
     if (!reported) return
-    var agent = { state: reported, pids: Model.parsePids(pidsCsv) }
+    var pids = Model.parsePids(pidsCsv)
+    var prev = root.agents[session]
+    // Keep the window this agent was pinned to while it still exists; a
+    // single-instance terminal reports one PID for every window, so without a
+    // pin the badge would spill onto its siblings.
+    var address = (prev && prev.address) || ""
+    if (address && root.pidByAddress[address] === undefined) address = ""
+    if (!address) address = Model.agentPinAddress(pids, root.agentWindows, root.activeWindowAddress())
+    var agent = { state: reported, pids: pids, address: address }
     // Finishing in the window you are looking at needs no check mark.
-    if (reported === "done" && root.agentWindowPid(agent) === root.activeWindowPid()) agent.state = "idle"
+    if (reported === "done" && root.agentWindowMatchesActive(agent)) agent.state = "idle"
     next[session] = agent
     root.agents = next
   }
@@ -229,14 +256,13 @@ Panel {
 
   // Seeing a finished agent's window clears its check mark.
   function acknowledgeAgents() {
-    var pid = root.activeWindowPid()
-    if (!pid) return
+    if (!root.activeWindowAddress()) return
     var changed = false
     var next = ({})
     for (var k in root.agents) {
       var agent = root.agents[k]
-      if (agent.state === "done" && root.agentWindowPid(agent) === pid) {
-        agent = { state: "idle", pids: agent.pids }
+      if (agent.state === "done" && root.agentWindowMatchesActive(agent)) {
+        agent = { state: "idle", pids: agent.pids, address: agent.address }
         changed = true
       }
       next[k] = agent
