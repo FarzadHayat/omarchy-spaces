@@ -782,11 +782,14 @@ Panel {
           opacity: 0
           visible: pill.urgent
 
-          SequentialAnimation on opacity {
+          // Stepped glow (a few repaints/s instead of every frame).
+          Timer {
             running: pill.urgent
-            loops: Animation.Infinite
-            NumberAnimation { from: 0.15; to: 0.55; duration: 700; easing.type: Easing.InOutSine }
-            NumberAnimation { from: 0.55; to: 0.15; duration: 700; easing.type: Easing.InOutSine }
+            interval: 700
+            repeat: true
+            triggeredOnStart: true
+            onTriggered: urgentGlow.opacity = urgentGlow.opacity > 0.3 ? 0.15 : 0.55
+            onRunningChanged: if (!running) urgentGlow.opacity = 0
           }
         }
 
@@ -1012,12 +1015,14 @@ Panel {
                             target: root
                             function onFgChanged() { spinner.requestPaint() }
                           }
-                          RotationAnimator on rotation {
+                          // Stepped, not a RotationAnimator: an infinite animation repaints
+                          // the whole bar every frame (144 fps) while any agent works,
+                          // ~15% CPU and a GPU that never idles. 8 steps/s reads the same.
+                          Timer {
                             running: spinner.visible
-                            from: 0
-                            to: 360
-                            duration: 900
-                            loops: Animation.Infinite
+                            interval: 125
+                            repeat: true
+                            onTriggered: spinner.rotation = (spinner.rotation + 45) % 360
                           }
                         }
 
@@ -1031,12 +1036,13 @@ Panel {
                           font.bold: true
                         }
 
-                        SequentialAnimation on scale {
+                        // Stepped pulse (2 repaints/s instead of every frame).
+                        Timer {
                           running: appIcon.agentState === "waiting"
-                          loops: Animation.Infinite
-                          alwaysRunToEnd: true
-                          NumberAnimation { from: 1; to: 1.3; duration: 520; easing.type: Easing.InOutSine }
-                          NumberAnimation { from: 1.3; to: 1; duration: 520; easing.type: Easing.InOutSine }
+                          interval: 520
+                          repeat: true
+                          onTriggered: agentBadge.scale = agentBadge.scale > 1 ? 1 : 1.3
+                          onRunningChanged: if (!running) agentBadge.scale = 1
                         }
                       }
 
