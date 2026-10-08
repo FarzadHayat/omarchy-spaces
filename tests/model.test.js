@@ -270,8 +270,12 @@ test("fallbackLetter prefers the readable tail of a reverse-DNS class", () => {
   assert.strictEqual(M.fallbackLetter("が", ""), "が")
 })
 
-test("agentStates picks the nearest window and the most urgent state", () => {
-  const windows = { 100: true, 200: true, 300: true }
+test("agentWindowStates picks the nearest window and the most urgent state", () => {
+  const windows = [
+    { address: "0x1", pid: 100 },
+    { address: "0x2", pid: 200 },
+    { address: "0x3", pid: 300 }
+  ]
   const agents = {
     a: { state: "working", pids: [5, 6, 100, 200] },
     b: { state: "waiting", pids: [7, 100] },
@@ -279,7 +283,43 @@ test("agentStates picks the nearest window and the most urgent state", () => {
     d: { state: "idle", pids: [9, 300] },
     e: { state: "working", pids: [10, 11] }
   }
-  assert.deepStrictEqual(M.agentStates(agents, windows), { 100: "waiting", 300: "done" })
+  assert.deepStrictEqual(M.agentWindowStates(agents, windows), { "0x1": "waiting", "0x3": "done" })
+})
+
+test("agentWindowStates keeps a shared-PID badge in its pinned window", () => {
+  const windows = [
+    { address: "0xa", pid: 400 },
+    { address: "0xb", pid: 400 },
+    { address: "0xc", pid: 400 }
+  ]
+  // No pin: the PID is ambiguous, so every window with it is badged.
+  assert.deepStrictEqual(
+    M.agentWindowStates({ s: { state: "working", pids: [9, 400] } }, windows),
+    { "0xa": "working", "0xb": "working", "0xc": "working" })
+  // Pinned: only the owning window.
+  assert.deepStrictEqual(
+    M.agentWindowStates({ s: { state: "working", pids: [9, 400], address: "0xb" } }, windows),
+    { "0xb": "working" })
+  // A pin to a gone window falls back to the ambiguous set.
+  assert.deepStrictEqual(
+    M.agentWindowStates({ s: { state: "working", pids: [9, 400], address: "0xdead" } }, windows),
+    { "0xa": "working", "0xb": "working", "0xc": "working" })
+})
+
+test("agentPinAddress pins an ambiguous PID to the focused window", () => {
+  const windows = [
+    { address: "0xa", pid: 400 },
+    { address: "0xb", pid: 400 },
+    { address: "0xc", pid: 500 }
+  ]
+  // Focused window owns the agent: pin it.
+  assert.strictEqual(M.agentPinAddress([9, 400], windows, "0xb"), "0xb")
+  // Focused window is not an owner: no pin (avoids badging the wrong window).
+  assert.strictEqual(M.agentPinAddress([9, 400], windows, "0xc"), "")
+  // A unique PID needs no focus.
+  assert.strictEqual(M.agentPinAddress([9, 500], windows, "0xa"), "0xc")
+  // No window in the chain.
+  assert.strictEqual(M.agentPinAddress([9, 10], windows, "0xa"), "")
 })
 
 test("normalizeAgentState accepts only badge states", () => {

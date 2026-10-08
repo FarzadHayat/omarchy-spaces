@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- An agent badge no longer appears on every window that shares one process,
+  as Ghostty does in single-instance mode. The badge stays on the window the
+  turn started in.
 - Long titles no longer cut an emoji or an accented letter in half, and
   Korean, Japanese and Chinese characters count double toward the title
   length, so wide titles take the room the setting promises. The placeholder

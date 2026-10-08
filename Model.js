@@ -472,26 +472,62 @@ function previewLayout(windows, area, width, height) {
   return placed
 }
 
-// Maps window PIDs to agent states. `agents`: { session: { state, pids } }
-// where pids run from the agent up to init. The nearest ancestor that is a
-// window owns the agent, since terminals can be nested in other terminals.
-// When several agents share a window, "waiting" beats "working" beats "done".
+// Maps window addresses to agent states. `agents`: { session: { state, pids,
+// address } } where pids run from the agent up to init; `windows`:
+// [{ address, pid }]. The nearest ancestor that is a window owns the agent,
+// since terminals can be nested in other terminals. Terminals such as Ghostty
+// run every window in one process, so a single PID can own several windows;
+// an agent's "address" pins it to one of them. When several agents share a
+// window, "waiting" beats "working" beats "done".
 var AGENT_RANK = { waiting: 3, working: 2, done: 1 }
 
-function agentStates(agents, windowPids) {
+function agentWindowsByPid(windows) {
+  var byPid = {}
+  var list = windows || []
+  for (var w = 0; w < list.length; w++) {
+    var pid = Number(list[w].pid)
+    if (!pid) continue
+    if (!byPid[pid]) byPid[pid] = []
+    byPid[pid].push(String(list[w].address))
+  }
+  return byPid
+}
+
+function agentWindowStates(agents, windows) {
+  var byPid = agentWindowsByPid(windows)
   var out = {}
   for (var session in agents) {
     var agent = agents[session]
     var rank = AGENT_RANK[agent.state] || 0
     if (!rank) continue
+    var candidates = null
     for (var i = 0; i < agent.pids.length; i++) {
-      var pid = agent.pids[i]
-      if (!windowPids[pid]) continue
-      if (!out[pid] || AGENT_RANK[out[pid]] < rank) out[pid] = agent.state
-      break
+      if (byPid[agent.pids[i]]) { candidates = byPid[agent.pids[i]]; break }
+    }
+    if (!candidates) continue
+    // A pinned address only holds while that window still exists.
+    if (agent.address && candidates.indexOf(String(agent.address)) !== -1) candidates = [String(agent.address)]
+    for (var c = 0; c < candidates.length; c++) {
+      var address = candidates[c]
+      if (!out[address] || AGENT_RANK[out[address]] < rank) out[address] = agent.state
     }
   }
   return out
+}
+
+// Picks the single window to pin an agent to when its PID owns several
+// windows. The window focused when the report arrived is the best guess;
+// returns "" when the PID is ambiguous and the focused window does not own it.
+function agentPinAddress(pids, windows, activeAddress) {
+  var byPid = agentWindowsByPid(windows)
+  var candidates = null
+  for (var i = 0; i < pids.length; i++) {
+    if (byPid[pids[i]]) { candidates = byPid[pids[i]]; break }
+  }
+  if (!candidates) return ""
+  if (candidates.length === 1) return candidates[0]
+  var active = String(activeAddress || "")
+  return active && candidates.indexOf(active) !== -1 ? active : ""
 }
 
 function parsePids(csv) {
@@ -566,7 +602,8 @@ if (typeof module !== "undefined") {
   module.exports = {
     DEFAULTS: DEFAULTS, resolveSettings: resolveSettings, showsApps: showsApps,
     densityMetrics: densityMetrics, normalizeAddress: normalizeAddress,
-    agentStates: agentStates, parsePids: parsePids, normalizeAgentState: normalizeAgentState,
+    agentWindowStates: agentWindowStates, agentPinAddress: agentPinAddress,
+    parsePids: parsePids, normalizeAgentState: normalizeAgentState,
     agentProcessIds: agentProcessIds, pruneDeadAgents: pruneDeadAgents,
     previewWidth: previewWidth, previewDimensions: previewDimensions, monitorArea: monitorArea, previewLayout: previewLayout, durationFor: durationFor,
     workspaceIds: workspaceIds, workspaceLabel: workspaceLabel, appKey: appKey,
