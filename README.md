@@ -114,7 +114,7 @@ Requirements:
 
 - Omarchy 4 with the Quickshell bar (Hyprland 0.56 or newer)
 - `jq` for the agent hook (installed with Omarchy)
-- Claude Code, OpenCode, omp, or Cursor, only for agent status
+- Claude Code, OpenCode, omp, or Cursor, only for agent status (the Cursor reporter also needs Node.js)
 
 Works with the bar on any edge of the screen. Tested on a single monitor.
 
