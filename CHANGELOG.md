@@ -9,6 +9,12 @@
   Korean, Japanese and Chinese characters count double toward the title
   length, so wide titles take the room the setting promises. The placeholder
   letter keeps a whole emoji or syllable too (#17, @seunghan91)
+- Agent status: Cursor windows (and terminals running `cursor-agent`) get the
+  same badge as Claude Code terminals. `hooks/cursor-reporter.js` is a
+  stdio hook script registered in `~/.cursor/hooks.json`, reporting through
+  the existing `omarchy-shell ... agent` entry point, so the widget is
+  unchanged. No `waiting` badge: Cursor exposes no hook for it. The `stop`
+  hook entry sets `"loop_limit": null`, or Cursor disables it after 5 runs
 
 ## 1.2.0
 
