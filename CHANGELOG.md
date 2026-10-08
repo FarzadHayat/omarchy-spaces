@@ -1,20 +1,25 @@
 # Changelog
 
-## Unreleased
+## 1.3.0
 
-- An agent badge no longer appears on every window that shares one process,
-  as Ghostty does in single-instance mode. The badge stays on the window the
-  turn started in.
+- Agent status for Cursor: register `hooks/cursor-reporter.js` in
+  `~/.cursor/hooks.json` and Cursor windows, or terminals running
+  `cursor-agent`, get a spinner while the agent works and a check mark when it
+  stops. Cursor has no hook for "needs your input", so there is no `!` badge.
+  Needs Node.js (#5, @FarzadHayat)
+- An agent badge stays on its own window when several windows share one
+  process, as Ghostty does in single-instance mode. Before, every window of
+  that terminal showed it (#22, @FarzadHayat)
 - Long titles no longer cut an emoji or an accented letter in half, and
   Korean, Japanese and Chinese characters count double toward the title
-  length, so wide titles take the room the setting promises. The placeholder
-  letter keeps a whole emoji or syllable too (#17, @seunghan91)
-- Agent status: Cursor windows (and terminals running `cursor-agent`) get the
-  same badge as Claude Code terminals. `hooks/cursor-reporter.js` is a
-  stdio hook script registered in `~/.cursor/hooks.json`, reporting through
-  the existing `omarchy-shell ... agent` entry point, so the widget is
-  unchanged. No `waiting` badge: Cursor exposes no hook for it. The `stop`
-  hook entry sets `"loop_limit": null`, or Cursor disables it after 5 runs
+  length. The placeholder letter keeps a whole emoji or syllable too
+  (#17, @seunghan91)
+- Sharper icons at whole-number scales such as 1 and 2. Fractional scales
+  such as 1.25 are unchanged (#19, @imranZERO)
+- Much lower CPU use while an agent works: the spinner, the waiting pulse and
+  the urgent glow no longer redraw the whole bar every frame. One working
+  agent took the shell from about 1% to 19% CPU; it now steps a few times a
+  second instead
 
 ## 1.2.0
 
