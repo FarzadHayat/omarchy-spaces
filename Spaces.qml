@@ -483,14 +483,17 @@ Panel {
     root.iconRevision
     var key = Model.appKey(appId)
     var label = String(title || "")
-    var cacheKey = label === "" ? key : key + "\n" + label
+    // The shell hosts more than one app under its own id, so the title, not
+    // the id, tells those windows apart; only they cache under a title key.
+    var shellKey = key === "org.quickshell" && label !== ""
+    var cacheKey = shellKey ? key + "\u0000" + label.toLowerCase() : key
     var cached = root.iconCache[cacheKey]
     if (cached) return cached
 
     var entry = findDesktopEntry(appId)
-    if (entry && entry.noDisplay && label !== "") {
+    if (shellKey) {
       var titled = findDesktopEntry(label)
-      if (titled) entry = titled
+      if (titled && !titled.noDisplay) entry = titled
     }
     var source = iconUrl(entry && entry.icon ? entry.icon : appId)
     if (source === "" && key !== appId) source = iconUrl(key)
